@@ -1,19 +1,24 @@
 {
-  "name": "pkg-placeholder",
+  "name": "quick-pr",
   "type": "module",
   "version": "0.0.0",
   "packageManager": "pnpm@10.20.0",
-  "description": "_description_",
-  "author": "Anthony Fu <anthonyfu117@hotmail.com>",
+  "description": "Create a Pull Request with interactive branch selection",
+  "author": "KazooTTT <work@kazoottt.top>",
   "license": "MIT",
-  "funding": "https://github.com/sponsors/antfu",
-  "homepage": "https://github.com/antfu/pkg-placeholder#readme",
+  "funding": "https://github.com/sponsors/kazoottt",
+  "homepage": "https://github.com/KazooTTT/quick-pr#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/antfu/pkg-placeholder.git"
+    "url": "git+https://github.com/KazooTTT/quick-pr.git"
   },
-  "bugs": "https://github.com/antfu/pkg-placeholder/issues",
-  "keywords": [],
+  "bugs": "https://github.com/KazooTTT/quick-pr/issues",
+  "keywords": [
+    "pr",
+    "git",
+    "pull-request",
+    "cli"
+  ],
   "sideEffects": false,
   "exports": {
     ".": "./dist/index.mjs",
@@ -22,6 +27,9 @@
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
+  "bin": {
+    "quick-pr": "./dist/index.mjs"
+  },
   "files": [
     "dist"
   ],
@@ -36,23 +44,31 @@
     "typecheck": "tsc",
     "prepare": "simple-git-hooks"
   },
+  "dependencies": {
+    "inquirer": "catalog:prod",
+    "kolorist": "catalog:prod",
+    "open": "catalog:prod",
+    "yargs": "catalog:prod"
+  },
   "devDependencies": {
-    "@antfu/eslint-config": "catalog:cli",
-    "@antfu/ni": "catalog:cli",
+    "@antfu/eslint-config": "catalog:lint",
+    "@antfu/ni": "catalog:script",
     "@antfu/utils": "catalog:inlined",
+    "@types/inquirer": "catalog:types",
     "@types/node": "catalog:types",
-    "bumpp": "catalog:cli",
-    "eslint": "catalog:cli",
-    "lint-staged": "catalog:cli",
-    "simple-git-hooks": "catalog:cli",
-    "tinyexec": "catalog:testing",
-    "tsdown": "catalog:cli",
-    "tsx": "catalog:cli",
-    "typescript": "catalog:cli",
-    "vite": "catalog:cli",
-    "vitest": "catalog:testing",
-    "vitest-package-exports": "catalog:testing",
-    "yaml": "catalog:testing"
+    "@types/yargs": "catalog:types",
+    "bumpp": "catalog:script",
+    "eslint": "catalog:lint",
+    "lint-staged": "catalog:script",
+    "simple-git-hooks": "catalog:script",
+    "tinyexec": "catalog:script",
+    "tsdown": "catalog:build",
+    "tsx": "catalog:script",
+    "typescript": "catalog:build",
+    "vite": "catalog:build",
+    "vitest": "catalog:test",
+    "vitest-package-exports": "catalog:test",
+    "yaml": "catalog:test"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm i --frozen-lockfile --ignore-scripts --offline && npx lint-staged"

@@ -1,42 +1,95 @@
-# pkg-placeholder
+# quick-pr
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
-[![bundle][bundle-src]][bundle-href]
-[![JSDocs][jsdocs-src]][jsdocs-href]
 [![License][license-src]][license-href]
 
-_description_
+Create a Pull Request with interactive branch selection
 
-## Note for Developers
+## Installation
 
-This starter recommands using [npm Trusted Publisher](https://github.com/e18e/ecosystem-issues/issues/201), where the release is done on CI to ensure the security of the packages.
+```bash
+# Using npm
+npm install -g quick-pr
 
-To do so, you need to run `pnpm publish` manually for the very first time to create the package on npm, and then go to `https://www.npmjs.com/package/<your-package-name>/access` to set the connection to your GitHub repo.
+# Using pnpm
+pnpm add -g quick-pr
 
-Then for the future releases, you can run `pnpm run release` to do the release and the GitHub Actions will take care of the release process.
+# Using yarn
+yarn global add quick-pr
+```
+
+## Usage
+
+Navigate to your git repository and run:
+
+```bash
+quick-pr
+```
+
+The CLI will interactively guide you through creating a pull request:
+
+1. **Repository Detection**: Automatically detects the current Git repository
+2. **Branch Selection**: Interactively select the target branch from available branches
+3. **PR Generation**: Generates a standardized PR description with commit summaries
+4. **Media Support**: Copies the PR description to your clipboard
+5. **Browser Launch**: Opens the PR page in your default browser
+6. **Merge Branch**: Optionally creates a suggested merge branch for conflict resolution
+
+## Features
+
+- 🔧 **Interactive Branch Selection**: Choose target branch from a list of local and remote branches
+- 📋 **Auto-Generated PR Description**: Includes commit summaries and formatted content
+- 📋 **Clipboard Integration**: Automatically copies PR description to clipboard
+- 🌐 **Browser Integration**: Opens PR comparison page automatically
+- 🔄 **Merge Branch Suggestion**: Offers to create a merge resolution branch
+- 🏷️ **Multi-Platform Support**: Compatible with GitHub, GitLab, and Gitee
+- 🎨 **Git Service Detection**: Automatically formats PR links for different Git services
+
+## Requirements
+
+- `git` version 2.0+
+- Node.js version 18+
+
+## License
+
+[MIT](./LICENSE) License © [KazooTTT](https://github.com/kazoottt)
 
 ## Sponsors
 
 <p align="center">
-  <a href="https://cdn.jsdelivr.net/gh/antfu/static/sponsors.svg">
-    <img src='https://cdn.jsdelivr.net/gh/antfu/static/sponsors.svg'/>
+  <a href="https://github.com/sponsors/kazoottt">
+    <img src="https://github.com/sponsors/kazoottt" alt="GitHub Sponsors" />
   </a>
 </p>
 
-## License
+## Contributing
 
-[MIT](./LICENSE) License © [Anthony Fu](https://github.com/antfu)
+Contributions, issues, and feature requests are welcome!
+
+## Note for Developers
+
+This project uses pnpm workspaces and tsdown for building. For development:
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build the project
+pnpm run build
+
+# Run tests
+pnpm run test
+
+# Lint
+pnpm run lint
+```
 
 <!-- Badges -->
 
-[npm-version-src]: https://img.shields.io/npm/v/pkg-placeholder?style=flat&colorA=080f12&colorB=1fa669
-[npm-version-href]: https://npmjs.com/package/pkg-placeholder
-[npm-downloads-src]: https://img.shields.io/npm/dm/pkg-placeholder?style=flat&colorA=080f12&colorB=1fa669
-[npm-downloads-href]: https://npmjs.com/package/pkg-placeholder
-[bundle-src]: https://img.shields.io/bundlephobia/minzip/pkg-placeholder?style=flat&colorA=080f12&colorB=1fa669&label=minzip
-[bundle-href]: https://bundlephobia.com/result?p=pkg-placeholder
-[license-src]: https://img.shields.io/github/license/antfu/pkg-placeholder.svg?style=flat&colorA=080f12&colorB=1fa669
-[license-href]: https://github.com/antfu/pkg-placeholder/blob/main/LICENSE
-[jsdocs-src]: https://img.shields.io/badge/jsdocs-reference-080f12?style=flat&colorA=080f12&colorB=1fa669
-[jsdocs-href]: https://www.jsdocs.io/package/pkg-placeholder
+[npm-version-src]: https://img.shields.io/npm/v/quick-pr?style=flat&colorA=080f12&colorB=1fa669
+[npm-version-href]: https://npmjs.com/package/quick-pr
+[npm-downloads-src]: https://img.shields.io/npm/dm/quick-pr?style=flat&colorA=080f12&colorB=1fa669
+[npm-downloads-href]: https://npmjs.com/package/quick-pr
+[license-src]: https://img.shields.io/github/license/kazoottt/quick-pr.svg?style=flat&colorA=080f12&colorB=1fa669
+[license-href]: https://github.com/kazoottt/quick-pr/blob/main/LICENSE
