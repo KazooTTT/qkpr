@@ -1,7 +1,7 @@
 {
   "name": "@kzttools/quick-pr",
   "type": "module",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "packageManager": "pnpm@10.20.0",
   "description": "Create a Pull Request with interactive branch selection",
   "author": "KazooTTT <work@kazoottt.top>",
@@ -49,6 +49,7 @@
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
+    "@google/generative-ai": "catalog:",
     "inquirer": "catalog:prod",
     "inquirer-autocomplete-prompt": "catalog:prod",
     "kolorist": "catalog:prod",
