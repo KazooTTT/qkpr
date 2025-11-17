@@ -15,6 +15,14 @@ export interface PRInfo {
   mergeBranchName: string
 }
 
+export interface BranchInfo {
+  name: string
+  lastCommitTime: number
+  lastCommitTimeFormatted: string
+  isProtected: boolean
+  category: string
+}
+
 /**
  * 获取当前 Git 仓库信息
  */
@@ -65,6 +73,96 @@ export function getAllBranches(): string[] {
   catch {
     return []
   }
+}
+
+/**
+ * 获取分支的最后提交时间
+ */
+export function getBranchLastCommitTime(branchName: string): { timestamp: number, formatted: string } {
+  try {
+    // 尝试获取远程分支的时间
+    const command = `git log -1 --format=%ct origin/${branchName} 2>/dev/null || git log -1 --format=%ct ${branchName}`
+    const timestamp = Number.parseInt(
+      execSync(command, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'ignore'],
+      }).trim(),
+      10,
+    )
+
+    // 格式化时间
+    const date = new Date(timestamp * 1000)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+    let formatted: string
+    if (diffDays === 0) {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+      if (diffHours === 0) {
+        const diffMinutes = Math.floor(diffMs / (1000 * 60))
+        formatted = diffMinutes <= 1 ? 'just now' : `${diffMinutes}m ago`
+      }
+      else {
+        formatted = `${diffHours}h ago`
+      }
+    }
+    else if (diffDays === 1) {
+      formatted = 'yesterday'
+    }
+    else if (diffDays < 7) {
+      formatted = `${diffDays}d ago`
+    }
+    else if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7)
+      formatted = `${weeks}w ago`
+    }
+    else if (diffDays < 365) {
+      const months = Math.floor(diffDays / 30)
+      formatted = `${months}mo ago`
+    }
+    else {
+      const years = Math.floor(diffDays / 365)
+      formatted = `${years}y ago`
+    }
+
+    return { timestamp, formatted }
+  }
+  catch {
+    return { timestamp: 0, formatted: 'unknown' }
+  }
+}
+
+/**
+ * 获取分支类别
+ */
+export function getBranchCategory(branchName: string): string {
+  const match = branchName.match(/^([^/]+)\//)
+  return match ? match[1] : 'other'
+}
+
+/**
+ * 判断是否为受保护分支
+ */
+export function isProtectedBranch(branchName: string): boolean {
+  const protectedBranches = ['main', 'master', 'develop', 'dev', 'pre_master', 'dev_master']
+  return protectedBranches.includes(branchName)
+}
+
+/**
+ * 获取分支详细信息（包含时间和分类）
+ */
+export function getBranchesWithInfo(branches: string[]): BranchInfo[] {
+  return branches.map((branchName) => {
+    const { timestamp, formatted } = getBranchLastCommitTime(branchName)
+    return {
+      name: branchName,
+      lastCommitTime: timestamp,
+      lastCommitTimeFormatted: formatted,
+      isProtected: isProtectedBranch(branchName),
+      category: getBranchCategory(branchName),
+    }
+  })
 }
 
 /**

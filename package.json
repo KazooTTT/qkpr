@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "inquirer": "catalog:prod",
+    "inquirer-autocomplete-prompt": "catalog:prod",
     "kolorist": "catalog:prod",
     "open": "catalog:prod",
     "yargs": "catalog:prod"
@@ -59,6 +60,7 @@
     "@antfu/ni": "catalog:script",
     "@antfu/utils": "catalog:inlined",
     "@types/inquirer": "catalog:types",
+    "@types/inquirer-autocomplete-prompt": "catalog:types",
     "@types/node": "catalog:types",
     "@types/yargs": "catalog:types",
     "bumpp": "catalog:script",

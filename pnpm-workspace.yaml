@@ -19,6 +19,7 @@ catalogs:
     eslint: ^9.39.1
   prod:
     inquirer: ^9.2.20
+    inquirer-autocomplete-prompt: ^3.0.1
     kolorist: ^1.8.0
     open: ^8.4.2
     yargs: ^17.7.2
@@ -35,6 +36,7 @@ catalogs:
     yaml: ^2.8.1
   types:
     '@types/inquirer': ^9.0.7
+    '@types/inquirer-autocomplete-prompt': ^3.0.3
     '@types/node': ^24.10.0
     '@types/yargs': ^17.0.32
 onlyBuiltDependencies:
