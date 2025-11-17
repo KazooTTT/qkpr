@@ -1,4 +1,4 @@
-# @kazoottt/quick-pr
+# @kzttools/quick-pr
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
@@ -10,13 +10,13 @@ Create a Pull Request with interactive branch selection
 
 ```bash
 # Using npm
-npm install -g @kazoottt/quick-pr
+npm install -g @kzttools/quick-pr
 
 # Using pnpm
-pnpm add -g @kazoottt/quick-pr
+pnpm add -g @kzttools/quick-pr
 
 # Using yarn
-yarn global add @kazoottt/quick-pr
+yarn global add @kzttools/quick-pr
 ```
 
 ## Usage
@@ -26,7 +26,7 @@ Navigate to your git repository and run:
 ```bash
 quick-pr
 # or
-@kazoottt/quick-pr
+@kzttools/quick-pr
 ```
 
 The CLI will interactively guide you through creating a pull request:
@@ -81,9 +81,9 @@ pnpm run lint
 
 <!-- Badges -->
 
-[npm-version-src]: https://img.shields.io/npm/v/@kazoottt/quick-pr?style=flat&colorA=080f12&colorB=1fa669
-[npm-version-href]: https://npmjs.com/package/@kazoottt/quick-pr
-[npm-downloads-src]: https://img.shields.io/npm/dm/@kazoottt/quick-pr?style=flat&colorA=080f12&colorB=1fa669
-[npm-downloads-href]: https://npmjs.com/package/@kazoottt/quick-pr
+[npm-version-src]: https://img.shields.io/npm/v/@kzttools/quick-pr?style=flat&colorA=080f12&colorB=1fa669
+[npm-version-href]: https://npmjs.com/package/@kzttools/quick-pr
+[npm-downloads-src]: https://img.shields.io/npm/dm/@kzttools/quick-pr?style=flat&colorA=080f12&colorB=1fa669
+[npm-downloads-href]: https://npmjs.com/package/@kzttools/quick-pr
 [license-src]: https://img.shields.io/github/license/kazoottt/quick-pr.svg?style=flat&colorA=080f12&colorB=1fa669
 [license-href]: https://github.com/kazoottt/quick-pr/blob/main/LICENSE

@@ -1,5 +1,5 @@
 {
-  "name": "@kazoottt/quick-pr",
+  "name": "@kzttools/quick-pr",
   "type": "module",
   "version": "0.0.5",
   "packageManager": "pnpm@10.20.0",
@@ -32,7 +32,7 @@
   "types": "./dist/index.d.mts",
   "bin": {
     "quick-pr": "./dist/index.mjs",
-    "@kazoottt/quick-pr": "./dist/index.mjs"
+    "@kzttools/quick-pr": "./dist/index.mjs"
   },
   "files": [
     "dist"
