@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process'
+import { isIP } from 'is-ip'
 import { cyan, green, red } from 'kolorist'
 
 export interface GitInfo {
@@ -221,6 +222,11 @@ export function parseRemoteUrl(remote: string): { host: string, repoPath: string
   }
   else {
     return null
+  }
+
+  // For IP addresses, use HTTP instead of HTTPS
+  if (isIP(host)) {
+    protocol = 'http'
   }
 
   return { host, repoPath, protocol }
