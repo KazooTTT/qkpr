@@ -1,7 +1,7 @@
 {
   "name": "@kzttools/quick-pr",
   "type": "module",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "packageManager": "pnpm@10.20.0",
   "description": "Create a Pull Request with interactive branch selection",
   "author": "KazooTTT <work@kazoottt.top>",
