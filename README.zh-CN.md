@@ -93,7 +93,7 @@ quick-pr commit
 
 #### 模型配置
 
-默认情况下，工具使用 `gemini-2.0-flash-exp`。你可以配置不同的模型：
+默认情况下，工具使用 `gemini-2.0-flash`。你可以配置不同的模型：
 
 ```bash
 quick-pr config:model
@@ -107,27 +107,13 @@ quick-pr config:model
 
 常见的 Gemini 模型包括（更新于 2025.11.17，从 Google API 获取）：
 
-**Gemini 2.5 系列（最新）：**
+**常见 Gemini 模型：**
 
-- `gemini-2.5-pro` - 最新的稳定 Gemini 2.5 Pro
-- `gemini-2.5-flash` - 快速的 Gemini 2.5 Flash
-- `gemini-2.5-flash-lite` - 更轻量的 2.5 Flash 版本
-- `gemini-2.5-flash-image` - 支持图像生成
-- `gemini-2.5-computer-use-preview-10-2025` - 计算机使用预览版
-
-**Gemini 2.0 系列：**
-
-- `gemini-2.0-flash-exp`（默认）- Gemini 2.0 Flash 实验版
-- `gemini-2.0-flash` - 稳定版 Gemini 2.0 Flash
-- `gemini-2.0-flash-lite` - 轻量版本
-- `gemini-2.0-pro-exp` - Pro 实验版本
-- `gemini-2.0-flash-thinking-exp` - 思维模式实验版
-
-**最新别名：**
-
-- `gemini-flash-latest` - 指向最新的 flash 模型
-- `gemini-pro-latest` - 指向最新的 pro 模型
-- `gemini-flash-lite-latest` - 指向最新的 lite 模型
+- `gemini-2.5-pro`
+- `gemini-2.5-flash`
+- `gemini-2.0-flash`（默认）
+- `gemini-2.0-flash-exp`
+- `gemini-flash-latest`
 
 你也可以通过环境变量设置模型：
 
@@ -284,4 +270,4 @@ pnpm run lint
 [npm-downloads-src]: https://img.shields.io/npm/dm/@kzttools/quick-pr?style=flat&colorA=080f12&colorB=1fa669
 [npm-downloads-href]: https://npmjs.com/package/@kzttools/quick-pr
 [license-src]: https://img.shields.io/github/license/kazoottt/quick-pr.svg?style=flat&colorA=080f12&colorB=1fa669
-[license-href]: https://github.com/kazoottt/quick-pr/blob/main/LICENSE
+[license-href]: https://github.com/kazoottt/quick-pr/blob/main/LICENSE.md

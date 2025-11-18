@@ -71,7 +71,7 @@ export function setGeminiApiKey(apiKey: string): void {
 
 export function getGeminiModel(): string {
   const config = readConfig()
-  return config.geminiModel || process.env.QUICK_PR_GEMINI_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  return config.geminiModel || process.env.QUICK_PR_GEMINI_MODEL || process.env.GEMINI_MODEL || 'gemini-2.0-flash'
 }
 
 export function setGeminiModel(model: string): void {

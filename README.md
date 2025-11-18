@@ -93,7 +93,7 @@ Or the tool will prompt you to enter it on first use.
 
 #### Model Configuration
 
-By default, the tool uses `gemini-2.0-flash-exp`. You can configure a different model:
+By default, the tool uses `gemini-2.0-flash`. You can configure a different model:
 
 ```bash
 quick-pr config:model
@@ -107,27 +107,13 @@ The tool will:
 
 Common Gemini models include (updated 2025.11.17, fetched from Google API):
 
-**Gemini 2.5 Series (Latest):**
+**Common Gemini Models:**
 
-- `gemini-2.5-pro` - Latest stable Gemini 2.5 Pro
-- `gemini-2.5-flash` - Fast Gemini 2.5 Flash
-- `gemini-2.5-flash-lite` - Lighter 2.5 Flash version
-- `gemini-2.5-flash-image` - With image generation
-- `gemini-2.5-computer-use-preview-10-2025` - Computer use preview
-
-**Gemini 2.0 Series:**
-
-- `gemini-2.0-flash-exp` (default) - Gemini 2.0 Flash experimental
-- `gemini-2.0-flash` - Stable Gemini 2.0 Flash
-- `gemini-2.0-flash-lite` - Lighter version
-- `gemini-2.0-pro-exp` - Pro experimental version
-- `gemini-2.0-flash-thinking-exp` - Thinking mode experimental
-
-**Latest Aliases:**
-
-- `gemini-flash-latest` - Points to latest flash model
-- `gemini-pro-latest` - Points to latest pro model
-- `gemini-flash-lite-latest` - Points to latest lite model
+- `gemini-2.5-pro`
+- `gemini-2.5-flash`
+- `gemini-2.0-flash` (default)
+- `gemini-2.0-flash-exp`
+- `gemini-flash-latest`
 
 You can also set the model via environment variable:
 
@@ -284,4 +270,4 @@ pnpm run lint
 [npm-downloads-src]: https://img.shields.io/npm/dm/@kzttools/quick-pr?style=flat&colorA=080f12&colorB=1fa669
 [npm-downloads-href]: https://npmjs.com/package/@kzttools/quick-pr
 [license-src]: https://img.shields.io/github/license/kazoottt/quick-pr.svg?style=flat&colorA=080f12&colorB=1fa669
-[license-href]: https://github.com/kazoottt/quick-pr/blob/main/LICENSE
+[license-href]: https://github.com/kazoottt/quick-pr/blob/main/LICENSE.md
