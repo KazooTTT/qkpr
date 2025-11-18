@@ -49,11 +49,12 @@
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
-    "@google/generative-ai": "catalog:",
+    "@google/generative-ai": "catalog:prod",
     "inquirer": "catalog:prod",
     "inquirer-autocomplete-prompt": "catalog:prod",
     "kolorist": "catalog:prod",
     "open": "catalog:prod",
+    "ora": "catalog:prod",
     "yargs": "catalog:prod"
   },
   "devDependencies": {

@@ -18,10 +18,12 @@ catalogs:
     '@antfu/eslint-config': ^6.2.0
     eslint: ^9.39.1
   prod:
+    '@google/generative-ai': ^0.24.1
     inquirer: ^9.2.20
     inquirer-autocomplete-prompt: ^3.0.1
     kolorist: ^1.8.0
     open: ^8.4.2
+    ora: ^9.0.0
     yargs: ^17.7.2
   script:
     '@antfu/ni': ^27.0.1

@@ -13,6 +13,7 @@ import {
   getAllBranches,
   getGitInfo,
 } from './services/pr.js'
+import { handleBranchCommand, handleCommitCommand, handleConfigCommand, handleConfigModelCommand } from './utils/commit-cli.js'
 import {
   displayPRInfo,
   promptCreateMergeBranch,
@@ -27,6 +28,96 @@ const packageJsonPath = join(__dirname, '../package.json')
 const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
 const version = packageJson.version
 const packageName = packageJson.name
+
+/**
+ * Show main menu for feature selection
+ */
+async function showMainMenu(): Promise<void> {
+  console.log(
+    bold(
+      cyan('\n╔══════════════════════════════════════════════════════════════╗'),
+    ),
+  )
+  console.log(
+    bold(
+      cyan('║                    🚀  Quick PR Tool                         ║'),
+    ),
+  )
+  console.log(
+    bold(
+      cyan('║                                                              ║'),
+    ),
+  )
+  console.log(
+    bold(
+      cyan('║         Your All-in-One Git Workflow Assistant               ║'),
+    ),
+  )
+  console.log(
+    bold(
+      cyan('║                                                              ║'),
+    ),
+  )
+  console.log(
+    bold(
+      cyan('║              Author: KazooTTT                                ║'),
+    ),
+  )
+  console.log(
+    bold(
+      cyan('║              GitHub: https://github.com/KazooTTT/quick-pr    ║'),
+    ),
+  )
+  console.log(
+    bold(
+      cyan('╚══════════════════════════════════════════════════════════════╝'),
+    ),
+  )
+  console.log(`                        Version: ${version}\n`)
+
+  const inquirer = (await import('inquirer')).default
+
+  const { feature } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'feature',
+      message: 'What would you like to do?',
+      choices: [
+        { name: '🔧  Create Pull Request', value: 'pr' },
+        { name: '🤖  Generate Commit Message', value: 'commit' },
+        { name: '🌿  Generate Branch Name', value: 'branch' },
+        { name: '⚙️   Configure API Key', value: 'config' },
+        { name: '🔧  Configure Model', value: 'config:model' },
+        new inquirer.Separator(),
+        { name: '❌  Exit', value: 'exit' },
+      ],
+    },
+  ])
+
+  switch (feature) {
+    case 'pr':
+      await handlePRCommand()
+      break
+    case 'commit':
+      await handleCommitCommand()
+      break
+    case 'branch':
+      await handleBranchCommand()
+      break
+    case 'config':
+      await handleConfigCommand()
+      break
+    case 'config:model':
+      await handleConfigModelCommand()
+      break
+    case 'exit':
+      console.log(dim('\n👋  Goodbye!\n'))
+      process.exit(0)
+  }
+
+  // Check for updates after completing the main task
+  await checkAndNotifyUpdate(packageName, version)
+}
 
 function printPRBanner(): void {
   console.log(
@@ -134,20 +225,62 @@ async function handlePRCommand(): Promise<void> {
   }
 
   console.log(green('\n🎉  PR creation process completed!\n'))
-
-  // Check for updates after completing the main task
-  await checkAndNotifyUpdate(packageName, version)
 }
 
 const _argv = yargs(hideBin(process.argv))
-  .scriptName('@kzttools/quick-pr')
-  .usage('Usage: $0 [options]')
+  .scriptName('quick-pr')
+  .usage('Usage: $0 <command> [options]')
   .command(
     '$0',
-    'Create a Pull Request with interactive branch selection',
+    'Show interactive menu to choose features',
+    () => {},
+    async () => {
+      await showMainMenu()
+    },
+  )
+  .command(
+    'pr',
+    '🔧  Create a Pull Request with interactive branch selection',
     () => {},
     async () => {
       await handlePRCommand()
+      await checkAndNotifyUpdate(packageName, version)
+    },
+  )
+  .command(
+    'commit',
+    '🤖  Generate commit message using AI',
+    () => {},
+    async () => {
+      await handleCommitCommand()
+      await checkAndNotifyUpdate(packageName, version)
+    },
+  )
+  .command(
+    'branch',
+    '🌿  Generate branch name using AI',
+    () => {},
+    async () => {
+      await handleBranchCommand()
+      await checkAndNotifyUpdate(packageName, version)
+    },
+  )
+  .command(
+    'config',
+    '⚙️   Configure Gemini API Key',
+    () => {},
+    async () => {
+      await handleConfigCommand()
+      await checkAndNotifyUpdate(packageName, version)
+    },
+  )
+  .command(
+    'config:model',
+    '🔧  Configure Gemini Model',
+    () => {},
+    async () => {
+      await handleConfigModelCommand()
+      await checkAndNotifyUpdate(packageName, version)
     },
   )
   .version(version)
