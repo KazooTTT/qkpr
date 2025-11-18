@@ -7,9 +7,6 @@ packages:
 ignoreWorkspaceRootCheck: true
 shellEmulator: true
 
-catalog:
-  inquirer-checkbox-plus-prompt: ^1.4.2
-  inquirer-search-checkbox: ^1.0.0
 catalogs:
   build:
     tsdown: ^0.16.0
@@ -24,6 +21,7 @@ catalogs:
     '@google/generative-ai': ^0.24.1
     inquirer: ^9.2.20
     inquirer-autocomplete-prompt: ^3.0.1
+    inquirer-search-checkbox: ^1.0.0
     is-ip: ^5.0.1
     kolorist: ^1.8.0
     open: ^8.4.2

@@ -51,7 +51,7 @@
     "@google/generative-ai": "catalog:prod",
     "inquirer": "catalog:prod",
     "inquirer-autocomplete-prompt": "catalog:prod",
-    "inquirer-search-checkbox": "catalog:",
+    "inquirer-search-checkbox": "catalog:prod",
     "is-ip": "catalog:prod",
     "kolorist": "catalog:prod",
     "open": "catalog:prod",

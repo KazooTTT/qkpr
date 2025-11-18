@@ -36,6 +36,9 @@ catalogs:
     inquirer-autocomplete-prompt:
       specifier: ^3.0.1
       version: 3.0.1
+    inquirer-search-checkbox:
+      specifier: ^1.0.0
+      version: 1.0.0
     is-ip:
       specifier: ^5.0.1
       version: 5.0.1
@@ -108,7 +111,7 @@ importers:
         specifier: catalog:prod
         version: 3.0.1(inquirer@9.3.8(@types/node@24.10.0))
       inquirer-search-checkbox:
-        specifier: ^1.0.0
+        specifier: catalog:prod
         version: 1.0.0
       is-ip:
         specifier: catalog:prod
