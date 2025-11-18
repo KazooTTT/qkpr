@@ -27,11 +27,7 @@ Navigate to your git repository and run:
 
 ```bash
 quick-pr
-# or use the full package name
-@kzttools/quick-pr
 ```
-
-> **Note**: All commands below use `quick-pr` for brevity, but you can replace it with `@kzttools/quick-pr` anywhere.
 
 The CLI will show an interactive menu where you can choose from all available features:
 

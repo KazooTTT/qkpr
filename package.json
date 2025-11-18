@@ -31,8 +31,7 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "bin": {
-    "quick-pr": "./dist/index.mjs",
-    "@kzttools/quick-pr": "./dist/index.mjs"
+    "quick-pr": "./dist/index.mjs"
   },
   "files": [
     "dist"
