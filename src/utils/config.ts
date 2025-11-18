@@ -8,7 +8,7 @@ export interface Config {
   pinnedBranches?: string[]
 }
 
-const CONFIG_DIR = join(homedir(), '.quick-pr')
+const CONFIG_DIR = join(homedir(), '.qkpr')
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json')
 
 /**
@@ -52,8 +52,8 @@ export function writeConfig(config: Config): void {
  * 优先级：配置文件 > 环境变量 QUICK_PR_GEMINI_API_KEY > GEMINI_API_KEY
  *
  * You can set the API key in either:
- * 1. Config file (~/.quick-pr/config.json) via `quick-pr config` command
- * 2. Environment variable: export QUICK_PR_GEMINI_API_KEY=your_api_key
+ * 1. Config file (~/.qkpr/config.json) via `qkpr config` command
+ * 2. Environment variable: export QKPR_GEMINI_API_KEY=your_api_key
  * 3. Environment variable (legacy): export GEMINI_API_KEY=your_api_key
  */
 export function getGeminiApiKey(): string | undefined {

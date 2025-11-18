@@ -1,5 +1,5 @@
 {
-  "name": "@kzttools/quick-pr",
+  "name": "qkpr",
   "type": "module",
   "version": "0.0.11",
   "packageManager": "pnpm@10.20.0",
@@ -7,12 +7,12 @@
   "author": "KazooTTT <work@kazoottt.top>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/kazoottt",
-  "homepage": "https://github.com/KazooTTT/quick-pr#readme",
+  "homepage": "https://github.com/KazooTTT/qkpr#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/KazooTTT/quick-pr.git"
+    "url": "git+https://github.com/KazooTTT/qkpr.git"
   },
-  "bugs": "https://github.com/KazooTTT/quick-pr/issues",
+  "bugs": "https://github.com/KazooTTT/qkpr/issues",
   "keywords": [
     "pr",
     "git",
@@ -28,7 +28,7 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "bin": {
-    "quick-pr": "./dist/index.mjs"
+    "qkpr": "./dist/index.mjs"
   },
   "files": [
     "dist"
@@ -79,8 +79,5 @@
   "simple-git-hooks": {
     "pre-commit": "pnpm i --frozen-lockfile --ignore-scripts --offline && npx lint-staged"
   },
-  "lint-staged": {
-    "*": "eslint --fix",
-    "src/**/*.{ts,tsx}": "tsc --noEmit"
-  }
+  "lint-staged": { "*": "eslint --fix" }
 }

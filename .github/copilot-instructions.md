@@ -42,7 +42,7 @@ Basically, you add catalog or catalogs fields to your pnpm-workspace.yaml file a
 ### Pinning Branches
 - A "pin branch" feature allows users to customize frequently used target branches.
 - The `pinnedBranches` are stored in the configuration file (`config.ts`).
-- The `quick-pr pin` command should display a list of existing branches for the user to select from, rather than requiring manual input.
+- The `qkpr pin` command should display a list of existing branches for the user to select from, rather than requiring manual input.
 - The pin and unpin commands now support a checkbox mode (space to select, enter to confirm) for selecting multiple branches.
 - The branch selection interface should be unified across the application, providing a consistent user experience.
 

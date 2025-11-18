@@ -1,4 +1,4 @@
-# @kzttools/quick-pr
+# qkpr
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
@@ -15,13 +15,13 @@ quick create pr with interactive branch selection
 
 ```bash
 # Using npm
-npm install -g @kzttools/quick-pr
+npm install -g qkpr
 
 # Using pnpm
-pnpm add -g @kzttools/quick-pr
+pnpm add -g qkpr
 
 # Using yarn
-yarn global add @kzttools/quick-pr
+yarn global add qkpr
 ```
 
 ## Usage
@@ -31,7 +31,7 @@ yarn global add @kzttools/quick-pr
 Navigate to your git repository and run:
 
 ```bash
-quick-pr
+qkpr
 ```
 
 The CLI will show an interactive menu where you can choose from all available features:
@@ -47,7 +47,7 @@ The CLI will show an interactive menu where you can choose from all available fe
 You can directly access the PR creation feature:
 
 ```bash
-quick-pr pr
+qkpr pr
 ```
 
 The CLI will interactively guide you through creating a pull request:
@@ -64,7 +64,7 @@ The CLI will interactively guide you through creating a pull request:
 Generate commit messages automatically using AI:
 
 ```bash
-quick-pr commit
+qkpr commit
 ```
 
 Features:
@@ -83,7 +83,7 @@ Features:
    - **Method 1**: Using config command
 
      ```bash
-     quick-pr config
+     qkpr config
      ```
 
    - **Method 2**: Using environment variable
@@ -101,7 +101,7 @@ Or the tool will prompt you to enter it on first use.
 By default, the tool uses `gemini-2.0-flash`. You can configure a different model:
 
 ```bash
-quick-pr config:model
+qkpr config:model
 ```
 
 The tool will:
@@ -135,7 +135,7 @@ export GEMINI_MODEL=gemini-2.5-pro
 git add .
 
 # Generate commit message
-quick-pr commit
+qkpr commit
 
 # The tool will:
 # 1. Analyze your staged changes
@@ -164,7 +164,7 @@ quick-pr commit
 - 📝 **Angular Convention**: Follows industry-standard commit message format
 - 🌿 **Branch Naming**: Suggests semantic branch names
 - 🔍 **Smart Analysis**: Analyzes git diff to understand changes
-- 💾 **Secure Storage**: API key stored locally in `~/.quick-pr/config.json`
+- 💾 **Secure Storage**: API key stored locally in `~/.qkpr/config.json`
 
 ### Other Features
 
@@ -177,7 +177,7 @@ quick-pr commit
 ### Interactive Menu (Default)
 
 ```bash
-quick-pr
+qkpr
 ```
 
 Shows an interactive menu to choose from all available features
@@ -185,7 +185,7 @@ Shows an interactive menu to choose from all available features
 ### Create PR
 
 ```bash
-quick-pr pr
+qkpr pr
 ```
 
 Directly create a pull request with interactive branch selection
@@ -193,7 +193,7 @@ Directly create a pull request with interactive branch selection
 ### Generate Commit Message
 
 ```bash
-quick-pr commit
+qkpr commit
 ```
 
 Directly generate commit message using AI (requires Gemini API key)
@@ -201,7 +201,7 @@ Directly generate commit message using AI (requires Gemini API key)
 ### Generate Branch Name
 
 ```bash
-quick-pr branch
+qkpr branch
 ```
 
 Directly generate a semantic branch name based on your staged changes using AI (requires Gemini API key)
@@ -209,13 +209,13 @@ Directly generate a semantic branch name based on your staged changes using AI (
 ### Configuration
 
 ```bash
-quick-pr config
+qkpr config
 ```
 
 Configure Gemini API key for AI features
 
 ```bash
-quick-pr config:model
+qkpr config:model
 ```
 
 Configure Gemini model for AI commit message generation
@@ -223,17 +223,17 @@ Configure Gemini model for AI commit message generation
 ### Version
 
 ```bash
-quick-pr --version
+qkpr --version
 # or
-quick-pr -v
+qkpr -v
 ```
 
 ### Help
 
 ```bash
-quick-pr --help
+qkpr --help
 # or
-quick-pr -h
+qkpr -h
 ```
 
 ## Requirements
@@ -270,9 +270,9 @@ pnpm run lint
 
 <!-- Badges -->
 
-[npm-version-src]: https://img.shields.io/npm/v/@kzttools/quick-pr?style=flat&colorA=080f12&colorB=1fa669
-[npm-version-href]: https://npmjs.com/package/@kzttools/quick-pr
-[npm-downloads-src]: https://img.shields.io/npm/dm/@kzttools/quick-pr?style=flat&colorA=080f12&colorB=1fa669
-[npm-downloads-href]: https://npmjs.com/package/@kzttools/quick-pr
-[license-src]: https://img.shields.io/github/license/kazoottt/quick-pr.svg?style=flat&colorA=080f12&colorB=1fa669
-[license-href]: https://github.com/kazoottt/quick-pr/blob/main/LICENSE.md
+[npm-version-src]: https://img.shields.io/npm/v/qkpr?style=flat&colorA=080f12&colorB=1fa669
+[npm-version-href]: https://npmjs.com/package/qkpr
+[npm-downloads-src]: https://img.shields.io/npm/dm/qkpr?style=flat&colorA=080f12&colorB=1fa669
+[npm-downloads-href]: https://npmjs.com/package/qkpr
+[license-src]: https://img.shields.io/github/license/kazoottt/qkpr.svg?style=flat&colorA=080f12&colorB=1fa669
+[license-href]: https://github.com/kazoottt/qkpr/blob/main/LICENSE.md

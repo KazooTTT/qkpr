@@ -133,7 +133,7 @@ export async function handleListPinnedCommand(): Promise<void> {
 
   if (pinnedBranches.length === 0) {
     console.log(yellow('⚠️  No pinned branches found'))
-    console.log(dim('Use "quick-pr pin <branch-name>" to pin a branch\n'))
+    console.log(dim('Use "qkpr pin <branch-name>" to pin a branch\n'))
     return
   }
 

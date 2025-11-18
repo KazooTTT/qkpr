@@ -1,4 +1,4 @@
-# @kzttools/quick-pr
+# qkpr
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
@@ -15,13 +15,13 @@
 
 ```bash
 # 使用 npm
-npm install -g @kzttools/quick-pr
+npm install -g qkpr
 
 # 使用 pnpm
-pnpm add -g @kzttools/quick-pr
+pnpm add -g qkpr
 
 # 使用 yarn
-yarn global add @kzttools/quick-pr
+yarn global add qkpr
 ```
 
 ## 使用方法
@@ -31,7 +31,7 @@ yarn global add @kzttools/quick-pr
 导航到你的 Git 仓库并运行：
 
 ```bash
-quick-pr
+qkpr
 ```
 
 CLI 将显示一个交互式菜单，你可以从中选择所有可用的功能：
@@ -47,7 +47,7 @@ CLI 将显示一个交互式菜单，你可以从中选择所有可用的功能�
 你可以直接访问 PR 创建功能：
 
 ```bash
-quick-pr pr
+qkpr pr
 ```
 
 CLI 将通过交互方式指导你创建 Pull Request：
@@ -64,7 +64,7 @@ CLI 将通过交互方式指导你创建 Pull Request：
 使用 AI 自动生成提交消息：
 
 ```bash
-quick-pr commit
+qkpr commit
 ```
 
 功能特性：
@@ -83,7 +83,7 @@ quick-pr commit
    - **方法 1**：使用配置命令
 
      ```bash
-     quick-pr config
+     qkpr config
      ```
 
    - **方法 2**：使用环境变量
@@ -101,7 +101,7 @@ quick-pr commit
 默认情况下，工具使用 `gemini-2.0-flash`。你可以配置不同的模型：
 
 ```bash
-quick-pr config:model
+qkpr config:model
 ```
 
 工具将：
@@ -135,7 +135,7 @@ export GEMINI_MODEL=gemini-2.5-pro
 git add .
 
 # 生成提交消息
-quick-pr commit
+qkpr commit
 
 # 工具将：
 # 1. 分析你的暂存变更
@@ -164,7 +164,7 @@ quick-pr commit
 - 📝 **Angular 约定**：遵循行业标准的提交消息格式
 - 🌿 **分支命名**：建议语义化分支名称
 - 🔍 **智能分析**：分析 git diff 以了解变更
-- 💾 **安全存储**：API 密钥本地存储在 `~/.quick-pr/config.json`
+- 💾 **安全存储**：API 密钥本地存储在 `~/.qkpr/config.json`
 
 ### 其他功能
 
@@ -177,7 +177,7 @@ quick-pr commit
 ### 交互式菜单（默认）
 
 ```bash
-quick-pr
+qkpr
 ```
 
 显示交互式菜单以选择所有可用功能
@@ -185,7 +185,7 @@ quick-pr
 ### 创建 PR
 
 ```bash
-quick-pr pr
+qkpr pr
 ```
 
 通过交互式分支选择直接创建 Pull Request
@@ -193,7 +193,7 @@ quick-pr pr
 ### 生成提交消息
 
 ```bash
-quick-pr commit
+qkpr commit
 ```
 
 使用 AI 直接生成提交消息（需要 Gemini API 密钥）
@@ -201,7 +201,7 @@ quick-pr commit
 ### 生成分支名称
 
 ```bash
-quick-pr branch
+qkpr branch
 ```
 
 使用 AI 基于你的暂存变更直接生成语义化分支名称（需要 Gemini API 密钥）
@@ -209,13 +209,13 @@ quick-pr branch
 ### 配置
 
 ```bash
-quick-pr config
+qkpr config
 ```
 
 为 AI 功能配置 Gemini API 密钥
 
 ```bash
-quick-pr config:model
+qkpr config:model
 ```
 
 配置用于 AI 提交消息生成的 Gemini 模型
@@ -223,17 +223,17 @@ quick-pr config:model
 ### 版本
 
 ```bash
-quick-pr --version
+qkpr --version
 # 或者
-quick-pr -v
+qkpr -v
 ```
 
 ### 帮助
 
 ```bash
-quick-pr --help
+qkpr --help
 # 或者
-quick-pr -h
+qkpr -h
 ```
 
 ## 系统要求
@@ -270,9 +270,9 @@ pnpm run lint
 
 <!-- Badges -->
 
-[npm-version-src]: https://img.shields.io/npm/v/@kzttools/quick-pr?style=flat&colorA=080f12&colorB=1fa669
-[npm-version-href]: https://npmjs.com/package/@kzttools/quick-pr
-[npm-downloads-src]: https://img.shields.io/npm/dm/@kzttools/quick-pr?style=flat&colorA=080f12&colorB=1fa669
-[npm-downloads-href]: https://npmjs.com/package/@kzttools/quick-pr
-[license-src]: https://img.shields.io/github/license/kazoottt/quick-pr.svg?style=flat&colorA=080f12&colorB=1fa669
-[license-href]: https://github.com/kazoottt/quick-pr/blob/main/LICENSE.md
+[npm-version-src]: https://img.shields.io/npm/v/qkpr?style=flat&colorA=080f12&colorB=1fa669
+[npm-version-href]: https://npmjs.com/package/qkpr
+[npm-downloads-src]: https://img.shields.io/npm/dm/qkpr?style=flat&colorA=080f12&colorB=1fa669
+[npm-downloads-href]: https://npmjs.com/package/qkpr
+[license-src]: https://img.shields.io/github/license/kazoottt/qkpr.svg?style=flat&colorA=080f12&colorB=1fa669
+[license-href]: https://github.com/kazoottt/qkpr/blob/main/LICENSE.md

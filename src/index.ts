@@ -104,7 +104,7 @@ async function showMainMenu(): Promise<void> {
   )
   console.log(
     bold(
-      cyan('║              GitHub: https://github.com/KazooTTT/quick-pr    ║'),
+      cyan('║              GitHub: https://github.com/KazooTTT/qkpr    ║'),
     ),
   )
   console.log(
@@ -315,7 +315,7 @@ async function handlePRCommand(): Promise<void> {
 }
 
 const _argv = yargs(hideBin(process.argv))
-  .scriptName('quick-pr')
+  .scriptName('qkpr')
   .usage('Usage: $0 <command> [options]')
   .command(
     '$0',
@@ -412,6 +412,6 @@ const _argv = yargs(hideBin(process.argv))
   .help('h')
   .alias('h', 'help')
   .epilog(
-    'For more information, visit https://github.com/KazooTTT/quick-pr',
+    'For more information, visit https://github.com/KazooTTT/qkpr',
   )
   .argv
