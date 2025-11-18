@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import inquirer from 'inquirer'
 import { cyan, dim, green, red, yellow } from 'kolorist'
 import {
@@ -164,7 +165,7 @@ export async function handleCommitCommand(): Promise<void> {
   if (!hasStagedChanges()) {
     console.log(yellow('⚠️  No staged changes found.'))
     console.log(dim('Please stage your changes using: git add <files>\n'))
-    process.exit(1)
+    return // 返回主菜单而不是退出
   }
 
   // 获取 API Key
@@ -186,7 +187,7 @@ export async function handleCommitCommand(): Promise<void> {
   const diff = getStagedDiff()
   if (!diff) {
     console.log(red('❌  Failed to get git diff'))
-    process.exit(1)
+    return // 返回主菜单而不是退出
   }
 
   try {
@@ -217,7 +218,7 @@ export async function handleCommitCommand(): Promise<void> {
         }
         else {
           console.log(red('\n❌  Commit failed\n'))
-          process.exit(1)
+          // 返回主菜单而不是退出
         }
         break
       }
@@ -237,13 +238,13 @@ export async function handleCommitCommand(): Promise<void> {
       }
       case 'cancel': {
         console.log(dim('\n❌  Cancelled\n'))
-        process.exit(0)
+        // 返回主菜单而不是退出
       }
     }
   }
   catch (error: any) {
     console.log(red(`\n❌  Error: ${error.message}\n`))
-    process.exit(1)
+    // 返回主菜单而不是退出
   }
 }
 
@@ -288,6 +289,78 @@ export async function handleConfigModelCommand(): Promise<void> {
 }
 
 /**
+ * 创建并切换到新分支
+ */
+export async function createAndCheckoutBranch(branchName: string): Promise<boolean> {
+  try {
+    console.log(cyan(`🌿  Creating and switching to branch: ${branchName}`))
+    execSync(`git checkout -b ${branchName}`, {
+      stdio: 'inherit',
+    })
+
+    console.log(green(`✅  Successfully created and switched to: ${branchName}\n`))
+    return true
+  }
+  catch {
+    console.log(red('❌  Failed to create branch'))
+    return false
+  }
+}
+
+/**
+ * 检查分支是否已推送到远程
+ */
+export function isBranchPushed(branchName: string): boolean {
+  try {
+    // 检查远程分支是否存在
+    const remoteBranches = execSync(`git ls-remote --heads origin ${branchName}`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    }).trim()
+
+    return remoteBranches.length > 0
+  }
+  catch {
+    return false
+  }
+}
+
+/**
+ * 推送分支到远程
+ */
+export function pushBranchToRemote(branchName: string): boolean {
+  try {
+    console.log(cyan(`📤  Pushing branch to remote: ${branchName}`))
+    execSync(`git push -u origin ${branchName}`, {
+      stdio: 'inherit',
+    })
+
+    console.log(green(`✅  Branch pushed successfully: ${branchName}\n`))
+    return true
+  }
+  catch {
+    console.log(red('❌  Failed to push branch to remote'))
+    return false
+  }
+}
+
+/**
+ * 询问是否创建并切换到建议的分支
+ */
+export async function promptCreateBranch(branchName: string): Promise<boolean> {
+  const { shouldCreate } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'shouldCreate',
+      message: `Create and switch to branch '${branchName}'?`,
+      default: false,
+    },
+  ])
+
+  return shouldCreate
+}
+
+/**
  * 生成分支名称
  */
 export async function handleBranchCommand(): Promise<void> {
@@ -303,7 +376,7 @@ export async function handleBranchCommand(): Promise<void> {
   if (!hasStagedChanges()) {
     console.log(yellow('⚠️  No staged changes found.'))
     console.log(dim('Please stage your changes using: git add <files>\n'))
-    process.exit(1)
+    return // 返回主菜单而不是退出
   }
 
   // 获取 API Key
@@ -325,7 +398,7 @@ export async function handleBranchCommand(): Promise<void> {
   const diff = getStagedDiff()
   if (!diff) {
     console.log(red('❌  Failed to get git diff'))
-    process.exit(1)
+    return // 返回主菜单而不是退出
   }
 
   try {
@@ -333,30 +406,41 @@ export async function handleBranchCommand(): Promise<void> {
     const branchName = await generateBranchName(apiKey, diff, model)
     displayBranchName(branchName)
 
-    // 询问是否复制到剪贴板
-    const { shouldCopy } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'shouldCopy',
-        message: 'Copy branch name to clipboard?',
-        default: true,
-      },
-    ])
+    // 询问是否创建并切换分支
+    const shouldCreate = await promptCreateBranch(branchName)
 
-    if (shouldCopy) {
-      if (copyToClipboard(branchName)) {
-        console.log(green('\n✅  Branch name copied to clipboard\n'))
-      }
-      else {
-        console.log(yellow('\n⚠️  Could not copy to clipboard\n'))
+    if (shouldCreate) {
+      const success = await createAndCheckoutBranch(branchName)
+      if (!success) {
+        // 返回主菜单而不是退出
       }
     }
     else {
-      console.log(dim('\n'))
+      // 询问是否复制到剪贴板
+      const { shouldCopy } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'shouldCopy',
+          message: 'Copy branch name to clipboard?',
+          default: true,
+        },
+      ])
+
+      if (shouldCopy) {
+        if (copyToClipboard(branchName)) {
+          console.log(green('\n✅  Branch name copied to clipboard\n'))
+        }
+        else {
+          console.log(yellow('\n⚠️  Could not copy to clipboard\n'))
+        }
+      }
+      else {
+        console.log(dim('\n'))
+      }
     }
   }
   catch (error: any) {
     console.log(red(`\n❌  Error: ${error.message}\n`))
-    process.exit(1)
+    // 返回主菜单而不是退出
   }
 }

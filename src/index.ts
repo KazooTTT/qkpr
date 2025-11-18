@@ -13,7 +13,7 @@ import {
   getAllBranches,
   getGitInfo,
 } from './services/pr.js'
-import { handleBranchCommand, handleCommitCommand, handleConfigCommand, handleConfigModelCommand } from './utils/commit-cli.js'
+import { handleBranchCommand, handleCommitCommand, handleConfigCommand, handleConfigModelCommand, isBranchPushed, pushBranchToRemote } from './utils/commit-cli.js'
 import {
   displayPRInfo,
   promptCreateMergeBranch,
@@ -97,26 +97,33 @@ async function showMainMenu(): Promise<void> {
   switch (feature) {
     case 'pr':
       await handlePRCommand()
+      await checkAndNotifyUpdate(packageName, version)
+      await showMainMenu() // 回到首页
       break
     case 'commit':
       await handleCommitCommand()
+      await checkAndNotifyUpdate(packageName, version)
+      await showMainMenu() // 回到首页
       break
     case 'branch':
       await handleBranchCommand()
+      await checkAndNotifyUpdate(packageName, version)
+      await showMainMenu() // 回到首页
       break
     case 'config':
       await handleConfigCommand()
+      await checkAndNotifyUpdate(packageName, version)
+      await showMainMenu() // 回到首页
       break
     case 'config:model':
       await handleConfigModelCommand()
+      await checkAndNotifyUpdate(packageName, version)
+      await showMainMenu() // 回到首页
       break
     case 'exit':
       console.log(dim('\n👋  Goodbye!\n'))
       process.exit(0)
   }
-
-  // Check for updates after completing the main task
-  await checkAndNotifyUpdate(packageName, version)
 }
 
 function printPRBanner(): void {
@@ -149,6 +156,23 @@ function printPRBanner(): void {
 }
 
 /**
+ * 询问是否推送分支到远程
+ */
+async function promptPushBranch(branchName: string): Promise<boolean> {
+  const inquirer = (await import('inquirer')).default
+  const { shouldPush } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'shouldPush',
+      message: `Branch '${branchName}' is not pushed to remote. Push now?`,
+      default: true,
+    },
+  ])
+
+  return shouldPush
+}
+
+/**
  * 处理 PR 命令
  */
 async function handlePRCommand(): Promise<void> {
@@ -159,18 +183,37 @@ async function handlePRCommand(): Promise<void> {
   if (!gitInfo.isGitRepo) {
     console.log(red('❌  Not a Git repository'))
     console.log(dim('Please run this command in a Git repository.\n'))
-    process.exit(1)
+    return // 返回主菜单而不是退出
   }
 
   console.log(cyan('📍  Current Repository Information:'))
   console.log(dim(`  Branch: ${gitInfo.currentBranch}`))
   console.log(dim(`  Remote: ${gitInfo.remoteUrl}\n`))
 
+  // 检查当前分支是否已推送到远程
+  if (!isBranchPushed(gitInfo.currentBranch)) {
+    console.log(yellow(`⚠️  Current branch '${gitInfo.currentBranch}' is not pushed to remote.`))
+    const shouldPush = await promptPushBranch(gitInfo.currentBranch)
+
+    if (shouldPush) {
+      const pushSuccess = pushBranchToRemote(gitInfo.currentBranch)
+      if (!pushSuccess) {
+        console.log(red('❌  Cannot create PR without pushing branch to remote.'))
+        return // 返回主菜单而不是退出
+      }
+    }
+    else {
+      console.log(yellow('⚠️  PR creation skipped because branch is not pushed to remote.'))
+      console.log(dim('Please push the branch manually and try again.\n'))
+      return // 返回主菜单而不是退出
+    }
+  }
+
   // 获取所有分支
   const branches = getAllBranches()
   if (branches.length === 0) {
     console.log(yellow('⚠️  No branches found.'))
-    process.exit(1)
+    return // 返回主菜单而不是退出
   }
 
   // 选择目标分支
@@ -187,7 +230,7 @@ async function handlePRCommand(): Promise<void> {
   )
   if (!prInfo) {
     console.log(red('❌  Failed to create PR information'))
-    process.exit(1)
+    return // 返回主菜单而不是退出
   }
 
   // 显示 PR 信息
@@ -220,7 +263,7 @@ async function handlePRCommand(): Promise<void> {
   if (shouldCreateMergeBranch) {
     const success = createMergeBranch(targetBranch, prInfo.mergeBranchName)
     if (!success) {
-      process.exit(1)
+      return // 返回主菜单而不是退出
     }
   }
 

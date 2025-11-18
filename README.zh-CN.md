@@ -5,6 +5,11 @@
 [![License][license-src]][license-href]
 
 通过交互式分支选择创建 Pull Request 的 CLI 工具
+## 功能演示
+
+快速创建带有交互式分支选择的 PR
+
+![](docs/images/demo.gif)
 
 ## 安装
 

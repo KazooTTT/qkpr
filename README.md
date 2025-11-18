@@ -5,6 +5,11 @@
 [![License][license-src]][license-href]
 
 Create a Pull Request with interactive branch selection
+## Usage Demo
+
+quick create pr with interactive branch selection
+
+![](docs/images/demo.gif)
 
 ## Installation
 
