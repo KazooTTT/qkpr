@@ -13,7 +13,7 @@ import {
   getAllBranches,
   getGitInfo,
 } from './services/pr.js'
-import { handleBranchCommand, handleCommitCommand, handleConfigCommand, handleConfigModelCommand, isBranchPushed, pushBranchToRemote } from './utils/commit-cli.js'
+import { handleBranchCommand, handleCommitCommand, handleConfigCommand, handleConfigModelCommand, handleConfigPromptLangCommand, handleConfigPromptsCommand, isBranchPushed, pushBranchToRemote } from './utils/commit-cli.js'
 import { handleListPinnedCommand, handlePinCommand, handleUnpinCommand } from './utils/pin-cli.js'
 import {
   displayPRInfo,
@@ -68,9 +68,45 @@ async function showPinnedBranchesMenu(): Promise<void> {
   }
 }
 
-/**
- * Show main menu for feature selection
- */
+async function showSettingsMenu(): Promise<void> {
+  const inquirer = (await import('inquirer')).default
+
+  while (true) {
+    const { setting } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'setting',
+        message: 'Settings',
+        choices: [
+          { name: '1. ⚙️   Configure API Key', value: 'config', key: '1' },
+          { name: '2. 🔧  Configure Model', value: 'config:model', key: '2' },
+          { name: '3. 🌐  Configure Prompt Language', value: 'config:prompt-lang', key: '3' },
+          { name: '4. 📝  Configure Custom Prompts', value: 'config:prompts', key: '4' },
+          new inquirer.Separator(),
+          { name: '↩️   Back to main menu', value: 'back' },
+        ],
+      },
+    ])
+
+    switch (setting) {
+      case 'config':
+        await handleConfigCommand()
+        break
+      case 'config:model':
+        await handleConfigModelCommand()
+        break
+      case 'config:prompt-lang':
+        await handleConfigPromptLangCommand()
+        break
+      case 'config:prompts':
+        await handleConfigPromptsCommand()
+        break
+      case 'back':
+        return
+    }
+  }
+}
+
 async function showMainMenu(): Promise<void> {
   console.log(
     bold(
@@ -79,7 +115,7 @@ async function showMainMenu(): Promise<void> {
   )
   console.log(
     bold(
-      cyan('║                    🚀  Quick PR Tool                         ║'),
+      cyan('║                     🚀  Quick PR Tool                        ║'),
     ),
   )
   console.log(
@@ -89,7 +125,7 @@ async function showMainMenu(): Promise<void> {
   )
   console.log(
     bold(
-      cyan('║         Your All-in-One Git Workflow Assistant               ║'),
+      cyan('║           Your All-in-One Git Workflow Assistant             ║'),
     ),
   )
   console.log(
@@ -99,12 +135,12 @@ async function showMainMenu(): Promise<void> {
   )
   console.log(
     bold(
-      cyan('║              Author: KazooTTT                                ║'),
+      cyan('║                      Author: KazooTTT                        ║'),
     ),
   )
   console.log(
     bold(
-      cyan('║              GitHub: https://github.com/KazooTTT/qkpr    ║'),
+      cyan('║          GitHub: https://github.com/KazooTTT/qkpr            ║'),
     ),
   )
   console.log(
@@ -112,7 +148,7 @@ async function showMainMenu(): Promise<void> {
       cyan('╚══════════════════════════════════════════════════════════════╝'),
     ),
   )
-  console.log(`                        Version: ${version}\n`)
+  console.log(`            Version: ${version}\n`)
 
   const inquirer = (await import('inquirer')).default
 
@@ -125,9 +161,8 @@ async function showMainMenu(): Promise<void> {
         { name: '1. 🔧  Create Pull Request', value: 'pr', key: '1' },
         { name: '2. 🤖  Generate Commit Message', value: 'commit', key: '2' },
         { name: '3. 🌿  Generate Branch Name', value: 'branch', key: '3' },
-        { name: '4. ⚙️   Configure API Key', value: 'config', key: '4' },
-        { name: '5. 🔧  Configure Model', value: 'config:model', key: '5' },
-        { name: '6. 📌  Manage Pinned Branches', value: 'pinned', key: '6' },
+        { name: '4. 📌  Manage Pinned Branches', value: 'pinned', key: '4' },
+        { name: '5. ⚙️   Settings', value: 'settings', key: '5' },
         new inquirer.Separator(),
         { name: '❌  Exit', value: 'exit' },
       ],
@@ -150,18 +185,12 @@ async function showMainMenu(): Promise<void> {
       await checkAndNotifyUpdate(packageName, version)
       await showMainMenu() // 回到首页
       break
-    case 'config':
-      await handleConfigCommand()
-      await checkAndNotifyUpdate(packageName, version)
-      await showMainMenu() // 回到首页
-      break
-    case 'config:model':
-      await handleConfigModelCommand()
-      await checkAndNotifyUpdate(packageName, version)
-      await showMainMenu() // 回到首页
-      break
     case 'pinned':
       await showPinnedBranchesMenu()
+      await showMainMenu() // 回到首页
+      break
+    case 'settings':
+      await showSettingsMenu()
       await showMainMenu() // 回到首页
       break
     case 'exit':
@@ -178,7 +207,7 @@ function printPRBanner(): void {
   )
   console.log(
     bold(
-      cyan('║                    🔧  Quick PR Creator                      ║'),
+      cyan('║                     🔧  Quick PR Creator                  ║'),
     ),
   )
   console.log(
@@ -188,7 +217,7 @@ function printPRBanner(): void {
   )
   console.log(
     bold(
-      cyan('║              Interactive PR Creation Tool                    ║'),
+      cyan('║              Interactive PR Creation Tool                 ║'),
     ),
   )
   console.log(
@@ -196,7 +225,7 @@ function printPRBanner(): void {
       cyan('╚══════════════════════════════════════════════════════════════╝'),
     ),
   )
-  console.log(`                        Version: ${version}\n`)
+  console.log(`                   Version: ${version}\n`)
 }
 
 /**
@@ -367,6 +396,24 @@ const _argv = yargs(hideBin(process.argv))
     () => {},
     async () => {
       await handleConfigModelCommand()
+      await checkAndNotifyUpdate(packageName, version)
+    },
+  )
+  .command(
+    'config:prompt-lang',
+    '🌐  Configure Prompt Language',
+    () => {},
+    async () => {
+      await handleConfigPromptLangCommand()
+      await checkAndNotifyUpdate(packageName, version)
+    },
+  )
+  .command(
+    'config:prompts',
+    '📝  Configure Custom Prompts',
+    () => {},
+    async () => {
+      await handleConfigPromptsCommand()
       await checkAndNotifyUpdate(packageName, version)
     },
   )

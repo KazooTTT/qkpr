@@ -9,7 +9,7 @@
 
 快速创建带有交互式分支选择的 PR
 
-![](docs/images/demo.gif)
+![demo](https://github.com/user-attachments/assets/ec06d376-d7dd-4470-ae61-a7e66605f7b8)
 
 ## 安装
 
@@ -74,6 +74,7 @@ qkpr commit
 - 🌿 **分支名称建议**：基于变更建议适当的分支名称
 - 🎯 **智能分析**：分析暂存的变更（`git diff --cached`）
 - ✅ **交互式**：选择提交、复制或重新生成
+- 🚀 **自动推送**：可选择在提交后自动将代码推送到远程仓库
 
 #### 首次设置
 

@@ -13,7 +13,18 @@ import {
   performCommit,
 } from '../services/commit.js'
 import { copyToClipboard } from '../services/pr.js'
-import { getGeminiApiKey, getGeminiModel, setGeminiApiKey, setGeminiModel } from './config.js'
+import {
+  getCustomBranchNamePrompt,
+  getCustomCommitMessagePrompt,
+  getGeminiApiKey,
+  getGeminiModel,
+  getPromptLanguage,
+  setCustomBranchNamePrompt,
+  setCustomCommitMessagePrompt,
+  setGeminiApiKey,
+  setGeminiModel,
+  setPromptLanguage,
+} from './config.js'
 
 // Register the autocomplete prompt
 inquirer.registerPrompt('autocomplete', inquirerAutoComplete)
@@ -88,6 +99,22 @@ export async function promptCommit(): Promise<boolean> {
   ])
 
   return shouldCommit
+}
+
+/**
+ * 询问是否 push
+ */
+export async function promptPush(): Promise<boolean> {
+  const { shouldPush } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'shouldPush',
+      message: 'Push the changes to the remote repository?',
+      default: true,
+    },
+  ])
+
+  return shouldPush
 }
 
 /**
@@ -200,7 +227,18 @@ export async function handleCommitCommand(): Promise<void> {
 
   // 获取配置的模型并显示
   const model = getGeminiModel()
-  console.log(dim(`Using model: ${model}\n`))
+  console.log(dim(`Using model: ${model}`))
+
+  // 显示当前的 prompt 模式
+  const customCommitPrompt = getCustomCommitMessagePrompt()
+  if (customCommitPrompt) {
+    console.log(dim('Using custom commit message prompt'))
+  }
+  else {
+    const promptLanguage = getPromptLanguage()
+    console.log(dim(`Using ${promptLanguage} commit message prompt`))
+  }
+  console.log('') // 空行
 
   // 检查是否有暂存的更改
   if (!hasStagedChanges()) {
@@ -263,6 +301,19 @@ export async function handleCommitCommand(): Promise<void> {
         const success = performCommit(commitMessage)
         if (success) {
           console.log(green('\n✅  Commit successful!\n'))
+          const shouldPush = await promptPush()
+          if (shouldPush) {
+            const branchName = execSync('git branch --show-current').toString().trim()
+            if (branchName) {
+              const pushSuccess = pushBranchToRemote(branchName)
+              if (!pushSuccess) {
+                console.log(red('❌  Failed to push changes'))
+              }
+            }
+            else {
+              console.log(red('❌  Could not determine the current branch name.'))
+            }
+          }
         }
         else {
           console.log(red('\n❌  Commit failed\n'))
@@ -430,7 +481,18 @@ export async function handleBranchCommand(): Promise<void> {
 
   // 获取配置的模型并显示
   const model = getGeminiModel()
-  console.log(dim(`Using model: ${model}\n`))
+  console.log(dim(`Using model: ${model}`))
+
+  // 显示当前的 prompt 模式
+  const customBranchPrompt = getCustomBranchNamePrompt()
+  if (customBranchPrompt) {
+    console.log(dim('Using custom branch name prompt'))
+  }
+  else {
+    const promptLanguage = getPromptLanguage()
+    console.log(dim(`Using ${promptLanguage} branch name prompt`))
+  }
+  console.log('') // 空行
 
   // 检查是否有暂存的更改
   if (!hasStagedChanges()) {
@@ -509,5 +571,128 @@ export async function handleBranchCommand(): Promise<void> {
   catch (error: any) {
     console.log(red(`\n❌  Error: ${error.message}\n`))
     // 返回主菜单而不是退出
+  }
+}
+
+/**
+ * 配置语言
+ */
+export async function handleConfigPromptLangCommand(): Promise<void> {
+  console.log(cyan('\n╔══════════════════════════════════════════════════════════════╗'))
+  console.log(cyan('║              🌐  Prompt Language Configuration             ║'))
+  console.log(cyan('╚══════════════════════════════════════════════════════════════╝\n'))
+
+  const currentLanguage = getPromptLanguage()
+  console.log(dim(`Current prompt language: ${currentLanguage}\n`))
+
+  const { language } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'language',
+      message: 'Select a language for the prompts:',
+      choices: [
+        { name: '🇨🇳  Chinese', value: 'zh' },
+        { name: '🇺🇸  English', value: 'en' },
+        new inquirer.Separator(),
+        { name: '↩️   Go back', value: 'back' },
+      ],
+      default: currentLanguage,
+    },
+  ])
+
+  if (language === 'back') {
+    console.log(yellow('\n⚠️  Cancelled\n'))
+    return
+  }
+
+  setPromptLanguage(language)
+
+  console.log(green(`\n✅  Prompt language configured successfully: ${language}\n`))
+}
+
+/**
+ * 配置自定义 Prompts
+ */
+export async function handleConfigPromptsCommand(): Promise<void> {
+  console.log(cyan('\n╔══════════════════════════════════════════════════════════════╗'))
+  console.log(cyan('║              📝  Custom Prompts Configuration              ║'))
+  console.log(cyan('╚══════════════════════════════════════════════════════════════╝\n'))
+
+  const currentCommitPrompt = getCustomCommitMessagePrompt()
+  const currentBranchPrompt = getCustomBranchNamePrompt()
+
+  console.log(dim('Current custom commit message prompt:'))
+  console.log(currentCommitPrompt ? yellow(currentCommitPrompt) : dim('Not set'))
+  console.log(dim('\nCurrent custom branch name prompt:'))
+  console.log(currentBranchPrompt ? yellow(currentBranchPrompt) : dim('Not set'))
+
+  const { action } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: 'What would you like to do?',
+      choices: [
+        { name: '✏️  Set custom commit message prompt', value: 'commit' },
+        { name: '✏️  Set custom branch name prompt', value: 'branch' },
+        new inquirer.Separator(),
+        { name: '🗑️  Clear custom commit message prompt', value: 'clear-commit' },
+        { name: '🗑️  Clear custom branch name prompt', value: 'clear-branch' },
+        new inquirer.Separator(),
+        { name: '↩️   Go back', value: 'back' },
+      ],
+    },
+  ])
+
+  switch (action) {
+    case 'commit': {
+      const { prompt } = await inquirer.prompt([
+        {
+          type: 'editor',
+          name: 'prompt',
+          message: 'Enter your custom commit message prompt:',
+          default: currentCommitPrompt,
+        },
+      ])
+      if (prompt) {
+        setCustomCommitMessagePrompt(prompt)
+        console.log(green('\n✅  Custom commit message prompt saved!\n'))
+      }
+      else {
+        console.log(yellow('\n⚠️  Cancelled\n'))
+      }
+      break
+    }
+    case 'branch': {
+      const { prompt } = await inquirer.prompt([
+        {
+          type: 'editor',
+          name: 'prompt',
+          message: 'Enter your custom branch name prompt:',
+          default: currentBranchPrompt,
+        },
+      ])
+      if (prompt) {
+        setCustomBranchNamePrompt(prompt)
+        console.log(green('\n✅  Custom branch name prompt saved!\n'))
+      }
+      else {
+        console.log(yellow('\n⚠️  Cancelled\n'))
+      }
+      break
+    }
+    case 'clear-commit': {
+      setCustomCommitMessagePrompt('')
+      console.log(green('\n✅  Custom commit message prompt cleared!\n'))
+      break
+    }
+    case 'clear-branch': {
+      setCustomBranchNamePrompt('')
+      console.log(green('\n✅  Custom branch name prompt cleared!\n'))
+      break
+    }
+    case 'back': {
+      console.log(yellow('\n⚠️  Cancelled\n'))
+      break
+    }
   }
 }

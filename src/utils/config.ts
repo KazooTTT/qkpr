@@ -6,6 +6,9 @@ export interface Config {
   geminiApiKey?: string
   geminiModel?: string
   pinnedBranches?: string[]
+  promptLanguage?: 'en' | 'zh'
+  customCommitMessagePrompt?: string
+  customBranchNamePrompt?: string
 }
 
 const CONFIG_DIR = join(homedir(), '.qkpr')
@@ -124,4 +127,55 @@ export function removePinnedBranch(branch: string): void {
 export function isBranchPinned(branch: string): boolean {
   const pinnedBranches = getPinnedBranches()
   return pinnedBranches.includes(branch)
+}
+
+/**
+ * 获取语言
+ */
+export function getPromptLanguage(): 'en' | 'zh' {
+  const config = readConfig()
+  return config.promptLanguage || 'zh'
+}
+
+/**
+ * 设置语言
+ */
+export function setPromptLanguage(language: 'en' | 'zh'): void {
+  const config = readConfig()
+  config.promptLanguage = language
+  writeConfig(config)
+}
+
+/**
+ * 获取自定义 Commit Message Prompt
+ */
+export function getCustomCommitMessagePrompt(): string | undefined {
+  const config = readConfig()
+  return config.customCommitMessagePrompt
+}
+
+/**
+ * 设置自定义 Commit Message Prompt
+ */
+export function setCustomCommitMessagePrompt(prompt: string): void {
+  const config = readConfig()
+  config.customCommitMessagePrompt = prompt
+  writeConfig(config)
+}
+
+/**
+ * 获取自定义 Branch Name Prompt
+ */
+export function getCustomBranchNamePrompt(): string | undefined {
+  const config = readConfig()
+  return config.customBranchNamePrompt
+}
+
+/**
+ * 设置自定义 Branch Name Prompt
+ */
+export function setCustomBranchNamePrompt(prompt: string): void {
+  const config = readConfig()
+  config.customBranchNamePrompt = prompt
+  writeConfig(config)
 }

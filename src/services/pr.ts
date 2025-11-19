@@ -138,7 +138,23 @@ export function getBranchLastCommitTime(branchName: string): { timestamp: number
  */
 export function getBranchCategory(branchName: string): string {
   const match = branchName.match(/^([^/]+)\//)
-  return match ? match[1] : 'other'
+  if (match) {
+    return match[1]
+  }
+
+  // 对于没有斜杠的分支，进行更智能的分类
+  const lowerBranch = branchName.toLowerCase()
+  if (['main', 'master', 'develop', 'dev'].includes(lowerBranch)) {
+    return 'main' // 主要开发分支
+  }
+  if (lowerBranch.startsWith('release')) {
+    return 'release' // 发布分支
+  }
+  if (lowerBranch.startsWith('hotfix') || lowerBranch.startsWith('fix')) {
+    return 'hotfix' // 热修复分支
+  }
+
+  return 'other'
 }
 
 /**

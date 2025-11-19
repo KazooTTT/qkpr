@@ -11,7 +11,6 @@ quick create pr with interactive branch selection
 
 ![demo](https://github.com/user-attachments/assets/ec06d376-d7dd-4470-ae61-a7e66605f7b8)
 
-
 ## Installation
 
 ```bash
@@ -75,6 +74,7 @@ Features:
 - 🌿 **Branch Name Suggestion**: Suggests appropriate branch names based on changes
 - 🎯 **Smart Analysis**: Analyzes staged changes (git diff --cached)
 - ✅ **Interactive**: Choose to commit, copy, or regenerate
+- 🚀 **Auto Push**: Option to automatically push the commit to the remote repository
 
 #### First Time Setup
 
