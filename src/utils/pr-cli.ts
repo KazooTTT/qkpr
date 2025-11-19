@@ -67,8 +67,8 @@ export async function promptBranchSelection(
     branches.sort((a, b) => b.lastCommitTime - a.lastCommitTime)
   })
 
-  // 对类别排序（feat, fix, merge, refactor, 其他）
-  const categoryOrder = ['feat', 'fix', 'merge', 'refactor', 'hotfix', 'chore', 'docs', 'test', 'style']
+  // 对类别排序（main, release, feat, fix, merge, refactor, 其他）
+  const categoryOrder = ['main', 'release', 'feat', 'fix', 'merge', 'refactor', 'hotfix', 'chore', 'docs', 'test', 'style']
   const sortedCategories = Array.from(categorizedBranches.keys()).sort((a, b) => {
     const aIndex = categoryOrder.indexOf(a)
     const bIndex = categoryOrder.indexOf(b)
@@ -106,7 +106,19 @@ export async function promptBranchSelection(
   sortedCategories.forEach((category) => {
     const branches = categorizedBranches.get(category)!
     if (branches.length > 0) {
-      const categoryLabel = category === 'other' ? 'Other Branches' : `${category}/*`
+      let categoryLabel: string
+      if (category === 'other') {
+        categoryLabel = 'Other Branches'
+      }
+      else if (category === 'main') {
+        categoryLabel = 'Main Branches'
+      }
+      else if (category === 'release') {
+        categoryLabel = 'Release Branches'
+      }
+      else {
+        categoryLabel = `${category}/*`
+      }
       choices.push(new inquirer.Separator(cyan(`━━━━━━━━ ${categoryLabel} ━━━━━━━━`)))
       branches.forEach((branch) => {
         choices.push({
