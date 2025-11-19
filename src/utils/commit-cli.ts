@@ -283,7 +283,10 @@ export async function handleCommitCommand(): Promise<void> {
           if (shouldPush) {
             const branchName = execSync('git branch --show-current').toString().trim()
             if (branchName) {
-              pushBranchToRemote(branchName)
+              const pushSuccess = pushBranchToRemote(branchName)
+              if (!pushSuccess) {
+                console.log(red('❌  Failed to push changes'))
+              }
             }
             else {
               console.log(red('❌  Could not determine the current branch name.'))

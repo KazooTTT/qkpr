@@ -147,10 +147,10 @@ export function getBranchCategory(branchName: string): string {
   if (['main', 'master', 'develop', 'dev'].includes(lowerBranch)) {
     return 'main' // 主要开发分支
   }
-  if (lowerBranch.includes('release') || lowerBranch.includes('rel')) {
+  if (lowerBranch.startsWith('release')) {
     return 'release' // 发布分支
   }
-  if (lowerBranch.includes('hotfix') || lowerBranch.includes('fix')) {
+  if (lowerBranch.startsWith('hotfix') || lowerBranch.startsWith('fix')) {
     return 'hotfix' // 热修复分支
   }
 
