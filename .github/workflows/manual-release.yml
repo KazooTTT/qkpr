@@ -2,6 +2,17 @@ name: Manual Release
 
 on:
   workflow_dispatch:
+    inputs:
+      release-type:
+        description: Release type
+        required: true
+        default: next
+        type: choice
+        options:
+          - next
+          - patch
+          - minor
+          - major
 
 jobs:
   release:
@@ -38,7 +49,7 @@ jobs:
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm run release
+        run: pnpm run release:${{ inputs.release-type }}
 
       - name: Push changes
         run: git push --follow-tags
