@@ -20,10 +20,18 @@ export async function checkForUpdates(
     const latestVersion = execSync(`npm view ${packageName} version`, {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'ignore'],
-      timeout: 3000,
+      timeout: 5000, // Increased timeout
     }).trim()
 
     const hasUpdate = compareVersions(currentVersion, latestVersion) < 0
+
+    // Debug logging (can be enabled with environment variable)
+    if (process.env.DEBUG_QKPR_UPDATE) {
+      console.log(`[DEBUG] Package: ${packageName}`)
+      console.log(`[DEBUG] Current: ${currentVersion}`)
+      console.log(`[DEBUG] Latest: ${latestVersion}`)
+      console.log(`[DEBUG] Has update: ${hasUpdate}`)
+    }
 
     return {
       hasUpdate,
@@ -31,7 +39,12 @@ export async function checkForUpdates(
       latestVersion,
     }
   }
-  catch {
+  catch (error) {
+    // Log error for debugging but still return a safe result
+    if (process.env.DEBUG_QKPR_UPDATE) {
+      console.log(`[DEBUG] Update check failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+
     // If npm check fails, silently skip the update check
     return {
       hasUpdate: false,

@@ -108,6 +108,9 @@ async function showSettingsMenu(): Promise<void> {
 }
 
 async function showMainMenu(): Promise<void> {
+  // Check for updates at the start of main menu
+  await checkAndNotifyUpdate(packageName, version)
+
   console.log(
     bold(
       cyan('\n╔══════════════════════════════════════════════════════════════╗'),
@@ -172,17 +175,14 @@ async function showMainMenu(): Promise<void> {
   switch (feature) {
     case 'pr':
       await handlePRCommand()
-      await checkAndNotifyUpdate(packageName, version)
       await showMainMenu() // 回到首页
       break
     case 'commit':
       await handleCommitCommand()
-      await checkAndNotifyUpdate(packageName, version)
       await showMainMenu() // 回到首页
       break
     case 'branch':
       await handleBranchCommand()
-      await checkAndNotifyUpdate(packageName, version)
       await showMainMenu() // 回到首页
       break
     case 'pinned':

@@ -4,5 +4,5 @@
   ],
   "commit": "chore: release v%s",
   "tag": true,
-  "push": true
+  "push": false
 }
