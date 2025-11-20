@@ -1,4 +1,3 @@
-import type { BranchInfo } from '../services/pr.js'
 import inquirer from 'inquirer'
 import autocompletePrompt from 'inquirer-autocomplete-prompt'
 // @ts-expect-error - no types available
@@ -53,42 +52,18 @@ export async function promptBranchSelection(
     return aIndex - bIndex
   })
 
-  // 按类别分组普通分支
-  const categorizedBranches = new Map<string, BranchInfo[]>()
-  regularBranches.forEach((branch) => {
-    if (!categorizedBranches.has(branch.category)) {
-      categorizedBranches.set(branch.category, [])
-    }
-    categorizedBranches.get(branch.category)!.push(branch)
-  })
+  //  按名称对常规分支进行排序
+  regularBranches.sort((a, b) => a.name.localeCompare(b.name))
 
-  // 每个类别内按时间排序（最新的在前）
-  categorizedBranches.forEach((branches) => {
-    branches.sort((a, b) => b.lastCommitTime - a.lastCommitTime)
-  })
-
-  // 对类别排序（main, release, feat, fix, merge, refactor, 其他）
-  const categoryOrder = ['main', 'release', 'feat', 'fix', 'merge', 'refactor', 'hotfix', 'chore', 'docs', 'test', 'style']
-  const sortedCategories = Array.from(categorizedBranches.keys()).sort((a, b) => {
-    const aIndex = categoryOrder.indexOf(a)
-    const bIndex = categoryOrder.indexOf(b)
-    if (aIndex !== -1 && bIndex !== -1)
-      return aIndex - bIndex
-    if (aIndex !== -1)
-      return -1
-    if (bIndex !== -1)
-      return 1
-    if (a === 'other')
-      return 1
-    if (b === 'other')
-      return -1
-    return a.localeCompare(b)
-  })
+  // 限制分支数量以提高性能
+  const MAX_BRANCHES = 100
+  if (regularBranches.length > MAX_BRANCHES) {
+    regularBranches.splice(MAX_BRANCHES)
+  }
 
   // 构建选项列表
   const choices: any[] = []
 
-  // 按类别分组显示（仅用于单选模式）
   // 添加固定分支
   if (pinnedBranches.length > 0) {
     choices.push(new inquirer.Separator(magenta('━━━━━━━━ 📌 Pinned Branches ━━━━━━━━')))
@@ -102,34 +77,18 @@ export async function promptBranchSelection(
     choices.push(new inquirer.Separator(' '))
   }
 
-  // 添加分类分支
-  sortedCategories.forEach((category) => {
-    const branches = categorizedBranches.get(category)!
-    if (branches.length > 0) {
-      let categoryLabel: string
-      if (category === 'other') {
-        categoryLabel = 'Other Branches'
-      }
-      else if (category === 'main') {
-        categoryLabel = 'Main Branches'
-      }
-      else if (category === 'release') {
-        categoryLabel = 'Release Branches'
-      }
-      else {
-        categoryLabel = `${category}/*`
-      }
-      choices.push(new inquirer.Separator(cyan(`━━━━━━━━ ${categoryLabel} ━━━━━━━━`)))
-      branches.forEach((branch) => {
-        choices.push({
-          name: `   ${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
-          value: branch.name,
-          short: branch.name,
-        })
+  // 添加普通分支
+  if (regularBranches.length > 0) {
+    choices.push(new inquirer.Separator(cyan('━━━━━━━━ 🌿 All Branches (Alphabetical) ━━━━━━━━')))
+    regularBranches.forEach((branch) => {
+      choices.push({
+        name: `   ${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
+        value: branch.name,
+        short: branch.name,
       })
-      choices.push(new inquirer.Separator(' '))
-    }
-  })
+    })
+    choices.push(new inquirer.Separator(' '))
+  }
 
   // Filter function for autocomplete search
   const searchBranches = async (_answers: any, input = ''): Promise<any[]> => {
@@ -160,26 +119,12 @@ export async function promptBranchSelection(
     return selectedBranch
   }
   else {
-    // 按字母顺序排序所有分支
-    const allBranches = [...pinnedBranches, ...regularBranches]
-    allBranches.sort((a, b) => a.name.localeCompare(b.name))
-
-    const simpleChoices = allBranches.map((branch) => {
-      const isPinned = pinnedBranchNames.includes(branch.name)
-      const prefix = isPinned ? '📌 ' : '   '
-      return {
-        name: `${prefix}${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
-        value: branch.name,
-        short: branch.name,
-      }
-    })
-
     const { selectedBranches } = await inquirer.prompt([
       {
         type: 'search-checkbox',
         name: 'selectedBranches',
         message,
-        choices: simpleChoices,
+        choices,
       },
     ])
 

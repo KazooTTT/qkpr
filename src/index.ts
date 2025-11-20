@@ -207,7 +207,7 @@ function printPRBanner(): void {
   )
   console.log(
     bold(
-      cyan('║                     🔧  Quick PR Creator                  ║'),
+      cyan('║                     🔧  Quick PR Creator                     ║'),
     ),
   )
   console.log(
@@ -217,7 +217,7 @@ function printPRBanner(): void {
   )
   console.log(
     bold(
-      cyan('║              Interactive PR Creation Tool                 ║'),
+      cyan('║              Interactive PR Creation Tool                    ║'),
     ),
   )
   console.log(
