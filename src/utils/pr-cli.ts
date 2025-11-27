@@ -172,11 +172,30 @@ export async function promptCreateMergeBranch(mergeBranchName: string): Promise<
       type: 'confirm',
       name: 'createMergeBranch',
       message: 'Do you want to create a merge branch for conflict resolution?',
-      default: false,
+      default: true,
     },
   ])
 
   return createMergeBranch
+}
+
+/**
+ * 确认是否自动合并原始分支到合并分支
+ */
+export async function promptAutoMergeSource(sourceBranch: string, targetBranch: string): Promise<boolean> {
+  console.log(yellow(`\n🔄  Merge branch created successfully!`))
+  console.log(dim(`   This branch is based on '${targetBranch}' and can be used to test the merge.`))
+
+  const { shouldAutoMerge } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'shouldAutoMerge',
+      message: `Auto-merge '${sourceBranch}' to detect potential conflicts now?`,
+      default: false,
+    },
+  ])
+
+  return shouldAutoMerge
 }
 
 /**
