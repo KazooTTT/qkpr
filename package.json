@@ -50,6 +50,8 @@
   },
   "dependencies": {
     "@google/generative-ai": "catalog:prod",
+    "ansi-escapes": "catalog:prod",
+    "figures": "catalog:prod",
     "inquirer": "catalog:prod",
     "inquirer-autocomplete-prompt": "catalog:prod",
     "inquirer-search-checkbox": "catalog:prod",
@@ -57,6 +59,8 @@
     "kolorist": "catalog:prod",
     "open": "catalog:prod",
     "ora": "catalog:prod",
+    "run-async": "catalog:prod",
+    "rxjs": "catalog:prod",
     "yargs": "catalog:prod"
   },
   "devDependencies": {

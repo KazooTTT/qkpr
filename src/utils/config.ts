@@ -1,3 +1,5 @@
+import { execSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -5,7 +7,8 @@ import { join } from 'node:path'
 export interface Config {
   geminiApiKey?: string
   geminiModel?: string
-  pinnedBranches?: string[]
+  pinnedBranches?: string[] // deprecated: 全局 pinned branches,仅用于迁移
+  repositoryPinnedBranches?: Record<string, string[]> // 按仓库存储的 pinned branches
   promptLanguage?: 'en' | 'zh'
   customCommitMessagePrompt?: string
   customBranchNamePrompt?: string
@@ -13,6 +16,30 @@ export interface Config {
 
 const CONFIG_DIR = join(homedir(), '.qkpr')
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json')
+
+/**
+ * 获取当前仓库的唯一标识
+ * 使用 git remote URL 的 hash 值作为仓库标识
+ */
+function getRepositoryId(): string {
+  try {
+    const remoteUrl = execSync('git remote get-url origin', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim()
+    // 标准化 URL:移除 .git 后缀和协议差异
+    const normalizedUrl = remoteUrl
+      .replace(/\.git$/, '')
+      .replace(/^https?:\/\//, '')
+      .replace(/^git@/, '')
+      .replace(/:/g, '/')
+      .toLowerCase()
+
+    // 使用 hash 来缩短标识符
+    return createHash('md5').update(normalizedUrl).digest('hex').substring(0, 12)
+  }
+  catch {
+    // 如果不是 git 仓库或没有 remote,使用当前目录路径
+    return createHash('md5').update(process.cwd()).digest('hex').substring(0, 12)
+  }
+}
 
 /**
  * 确保配置目录存在
@@ -85,44 +112,78 @@ export function setGeminiModel(model: string): void {
 }
 
 /**
- * 获取已固定的分支列表
+ * 获取已固定的分支列表(仓库级别)
  */
 export function getPinnedBranches(): string[] {
   const config = readConfig()
-  return config.pinnedBranches || []
+  const repoId = getRepositoryId()
+
+  // 如果有仓库级别的配置,使用它
+  if (config.repositoryPinnedBranches?.[repoId]) {
+    return config.repositoryPinnedBranches[repoId]
+  }
+
+  // 否则,尝试从旧的全局配置迁移
+  if (config.pinnedBranches && config.pinnedBranches.length > 0) {
+    // 迁移到新的仓库级别配置
+    if (!config.repositoryPinnedBranches) {
+      config.repositoryPinnedBranches = {}
+    }
+    config.repositoryPinnedBranches[repoId] = [...config.pinnedBranches]
+
+    // 清理旧配置
+    delete config.pinnedBranches
+
+    writeConfig(config)
+    return config.repositoryPinnedBranches[repoId]
+  }
+
+  return []
 }
 
 /**
- * 添加固定分支
+ * 添加固定分支(仓库级别)
  */
 export function addPinnedBranch(branch: string): void {
   const config = readConfig()
-  const pinnedBranches = config.pinnedBranches || []
+  const repoId = getRepositoryId()
+
+  if (!config.repositoryPinnedBranches) {
+    config.repositoryPinnedBranches = {}
+  }
+
+  const pinnedBranches = config.repositoryPinnedBranches[repoId] || []
 
   if (!pinnedBranches.includes(branch)) {
     pinnedBranches.push(branch)
-    config.pinnedBranches = pinnedBranches
+    config.repositoryPinnedBranches[repoId] = pinnedBranches
     writeConfig(config)
   }
 }
 
 /**
- * 移除固定分支
+ * 移除固定分支(仓库级别)
  */
 export function removePinnedBranch(branch: string): void {
   const config = readConfig()
-  const pinnedBranches = config.pinnedBranches || []
+  const repoId = getRepositoryId()
 
+  if (!config.repositoryPinnedBranches?.[repoId]) {
+    return
+  }
+
+  const pinnedBranches = config.repositoryPinnedBranches[repoId]
   const index = pinnedBranches.indexOf(branch)
+
   if (index > -1) {
     pinnedBranches.splice(index, 1)
-    config.pinnedBranches = pinnedBranches
+    config.repositoryPinnedBranches[repoId] = pinnedBranches
     writeConfig(config)
   }
 }
 
 /**
- * 检查分支是否已固定
+ * 检查分支是否已固定(仓库级别)
  */
 export function isBranchPinned(branch: string): boolean {
   const pinnedBranches = getPinnedBranches()

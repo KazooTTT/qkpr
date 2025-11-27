@@ -295,6 +295,10 @@ async function handlePRCommand(): Promise<void> {
     gitInfo.currentBranch,
   )
 
+  if (!targetBranch) {
+    return // 返回主菜单而不是退出
+  }
+
   // 创建 PR
   const prInfo = createPullRequest(
     gitInfo.currentBranch,

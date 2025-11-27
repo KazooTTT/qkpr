@@ -19,6 +19,8 @@ catalogs:
     eslint: ^9.39.1
   prod:
     '@google/generative-ai': ^0.24.1
+    ansi-escapes: ^7.2.0
+    figures: ^6.1.0
     inquirer: ^9.2.20
     inquirer-autocomplete-prompt: ^3.0.1
     inquirer-search-checkbox: ^1.0.0
@@ -26,6 +28,8 @@ catalogs:
     kolorist: ^1.8.0
     open: ^8.4.2
     ora: ^9.0.0
+    run-async: ^4.0.6
+    rxjs: ^7.8.2
     yargs: ^17.7.2
   script:
     '@antfu/ni': ^27.0.1
