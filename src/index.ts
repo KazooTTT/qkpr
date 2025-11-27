@@ -358,7 +358,8 @@ async function handlePRCommand(): Promise<void> {
           console.log(dim(`   3. Run: git commit`))
           console.log(dim(`   4. Push the merge branch when ready`))
         }
-      } catch (error) {
+      }
+      catch {
         // The error is already logged by the service function, so we can just return.
         return
       }
