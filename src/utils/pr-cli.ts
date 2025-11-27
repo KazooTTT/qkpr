@@ -4,11 +4,13 @@ import autocompletePrompt from 'inquirer-autocomplete-prompt'
 import searchCheckbox from 'inquirer-search-checkbox'
 import { cyan, dim, green, magenta, yellow } from 'kolorist'
 import { getBranchesWithInfo } from '../services/pr.js'
-import { getPinnedBranches } from './config.js'
+import { addPinnedBranch, getPinnedBranches, removePinnedBranch } from './config.js'
+import AutocompletePinPrompt from './prompts/autocomplete-pin.js'
 
 // Register prompts
 inquirer.registerPrompt('autocomplete', autocompletePrompt)
 inquirer.registerPrompt('search-checkbox', searchCheckbox)
+inquirer.registerPrompt('autocomplete-pin', AutocompletePinPrompt)
 
 /**
  * 通用的分支选择函数，支持单选和多选
@@ -36,92 +38,156 @@ export async function promptBranchSelection(
   // 获取分支详细信息
   const branchInfos = getBranchesWithInfo(branches)
 
-  // 获取已固定的分支列表
-  const pinnedBranchNames = getPinnedBranches()
-
-  // 分类分支：固定分支 vs 普通分支
-  const allPinnedBranches = branchInfos.filter(b => pinnedBranchNames.includes(b.name))
-  const regularBranches = branchInfos.filter(b => !pinnedBranchNames.includes(b.name))
-
-  // 如果需要过滤掉已固定的分支，则只显示普通分支
-  const pinnedBranches = filterPinned ? [] : allPinnedBranches
-
-  // 固定分支按照配置顺序排序
-  pinnedBranches.sort((a, b) => {
-    const aIndex = pinnedBranchNames.indexOf(a.name)
-    const bIndex = pinnedBranchNames.indexOf(b.name)
-    return aIndex - bIndex
-  })
-
-  //  按名称对常规分支进行排序
-  regularBranches.sort((a, b) => a.name.localeCompare(b.name))
-
-  // 限制分支数量以提高性能
-  const MAX_BRANCHES = 100
-  if (regularBranches.length > MAX_BRANCHES) {
-    regularBranches.splice(MAX_BRANCHES)
-  }
-
-  // 构建选项列表
-  const choices: any[] = []
-
-  // 添加固定分支
-  if (pinnedBranches.length > 0) {
-    choices.push(new inquirer.Separator(magenta('━━━━━━━━ 📌 Pinned Branches ━━━━━━━━')))
-    pinnedBranches.forEach((branch) => {
-      choices.push({
-        name: `📌 ${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
-        value: branch.name,
-        short: branch.name,
-        checked: defaultSelected.includes(branch.name),
-      })
-    })
-    choices.push(new inquirer.Separator(' '))
-  }
-
-  // 添加普通分支
-  if (regularBranches.length > 0) {
-    choices.push(new inquirer.Separator(cyan('━━━━━━━━ 🌿 All Branches (Alphabetical) ━━━━━━━━')))
-    regularBranches.forEach((branch) => {
-      choices.push({
-        name: `   ${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
-        value: branch.name,
-        short: branch.name,
-        checked: defaultSelected.includes(branch.name),
-      })
-    })
-    choices.push(new inquirer.Separator(' '))
-  }
-
-  // Filter function for autocomplete search
-  const searchBranches = async (_answers: any, input = ''): Promise<any[]> => {
-    const lowerInput = input.toLowerCase()
-    return choices.filter((choice: any) => {
-      // Keep separators
-      if (!choice.value)
-        return true
-      // Filter by branch name
-      return choice.value.toLowerCase().includes(lowerInput)
-    })
-  }
-
   if (mode === 'single') {
-    // 单选模式总是使用 category 排序
+    // Lock the sorting order based on the initial pinned state
+    const sortingPinnedBranches = getPinnedBranches()
+
+    // 动态构建选项列表的函数
+    const searchBranches = async (_answers: any, input = ''): Promise<any[]> => {
+      // Get current pinned state for UI icons only
+      const currentPinnedBranches = getPinnedBranches()
+
+      // Group 1: Initially Pinned Branches (Keep them at the top)
+      const topGroupBranches = branchInfos.filter(b => sortingPinnedBranches.includes(b.name))
+
+      // Group 2: Initially Regular Branches
+      const bottomGroupBranches = branchInfos.filter(b => !sortingPinnedBranches.includes(b.name))
+
+      // If filterPinned is true, we might want to hide initially pinned ones?
+      // But the original logic was to hide them if they are already pinned.
+      // For now, let's assume we show all unless filterPinned is strictly handled.
+      // Original logic: const pinnedBranches = filterPinned ? [] : allPinnedBranches
+      // If filterPinned is true, we just empty the top group?
+      // Let's keep it simple and consistent with previous behavior but stabilized.
+      const effectiveTopGroup = filterPinned ? [] : topGroupBranches
+
+      // Sort Top Group by configuration order
+      effectiveTopGroup.sort((a, b) => {
+        const aIndex = sortingPinnedBranches.indexOf(a.name)
+        const bIndex = sortingPinnedBranches.indexOf(b.name)
+        return aIndex - bIndex
+      })
+
+      // Sort Bottom Group alphabetically
+      bottomGroupBranches.sort((a, b) => a.name.localeCompare(b.name))
+
+      // Limit bottom group size
+      const MAX_BRANCHES = 100
+      const displayBottomGroup = bottomGroupBranches.slice(0, MAX_BRANCHES)
+
+      // Build choices
+      const choices: any[] = []
+
+      // Combine groups for a unified list display
+      // Still keeping effectiveTopGroup first to maintain "Pinned First" logic
+      const allDisplayBranches = [...effectiveTopGroup, ...displayBottomGroup]
+
+      allDisplayBranches.forEach((branch) => {
+        const isPinnedNow = currentPinnedBranches.includes(branch.name)
+        choices.push({
+          name: `${isPinnedNow ? '📌' : '  '} ${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
+          value: branch.name,
+          short: branch.name,
+        })
+      })
+
+      // Add a cancel option at the end of the list, only if not in filterPinned mode
+      if (!filterPinned) { // Only add cancel if we are showing all branches, otherwise it's weird to cancel from a filtered list.
+        choices.push(new inquirer.Separator(' ')) // Optional separator before cancel
+        choices.push({
+          name: dim('  [Cancel PR creation]'),
+          value: '__CANCEL__',
+          short: 'Cancel',
+        })
+      }
+
+      const lowerInput = input.toLowerCase()
+      return choices.filter((choice: any) => {
+        // Keep separators and cancel option
+        if (!choice.value || choice.value === '__CANCEL__')
+          return true
+        // Filter by branch name
+        return choice.value.toLowerCase().includes(lowerInput)
+      })
+    }
+
     const { selectedBranch } = await inquirer.prompt([
       {
-        type: 'autocomplete',
+        type: 'autocomplete-pin',
         name: 'selectedBranch',
         message,
         source: searchBranches,
         pageSize: 20,
-        default: pinnedBranches.length > 0
-          ? pinnedBranches[0].name
-          : regularBranches[0]?.name,
+        onPin: async (branchName: string) => {
+          const currentPinned = getPinnedBranches()
+          if (currentPinned.includes(branchName)) {
+            removePinnedBranch(branchName)
+          }
+          else {
+            addPinnedBranch(branchName)
+          }
+        },
       },
     ])
     return selectedBranch
   }
   else {
+    // Multiple selection logic (unchanged mainly, but reused logic partially if needed)
+    // For simplicity, keep original logic for multiple selection as it uses checkboxes
+
+    const pinnedBranchNames = getPinnedBranches()
+    const allPinnedBranches = branchInfos.filter(b => pinnedBranchNames.includes(b.name))
+    const regularBranches = branchInfos.filter(b => !pinnedBranchNames.includes(b.name))
+    const pinnedBranches = filterPinned ? [] : allPinnedBranches
+
+    const choices: any[] = []
+
+    // Add a cancel option here too, if it makes sense for multiple selection mode
+    if (!filterPinned) {
+      choices.push(new inquirer.Separator(' '))
+      choices.push({
+        name: dim('  [Cancel PR creation]'),
+        value: '__CANCEL__',
+        short: 'Cancel',
+      })
+    }
+
+    pinnedBranches.sort((a, b) => {
+      const aIndex = pinnedBranchNames.indexOf(a.name)
+      const bIndex = pinnedBranchNames.indexOf(b.name)
+      return aIndex - bIndex
+    })
+    regularBranches.sort((a, b) => a.name.localeCompare(b.name))
+
+    if (regularBranches.length > 100) {
+      regularBranches.splice(100)
+    }
+
+    if (pinnedBranches.length > 0) {
+      choices.push(new inquirer.Separator(magenta('━━━━━━━━ 📌 Pinned Branches ━━━━━━━━')))
+      pinnedBranches.forEach((branch) => {
+        choices.push({
+          name: `📌 ${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
+          value: branch.name,
+          short: branch.name,
+          checked: defaultSelected.includes(branch.name),
+        })
+      })
+      choices.push(new inquirer.Separator(' '))
+    }
+    if (regularBranches.length > 0) {
+      choices.push(new inquirer.Separator(cyan('━━━━━━━━ 🌿 All Branches (Alphabetical) ━━━━━━━━')))
+      regularBranches.forEach((branch) => {
+        choices.push({
+          name: `   ${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
+          value: branch.name,
+          short: branch.name,
+          checked: defaultSelected.includes(branch.name),
+        })
+      })
+      choices.push(new inquirer.Separator(' '))
+    }
+
     const { selectedBranches } = await inquirer.prompt([
       {
         type: 'search-checkbox',
@@ -138,7 +204,7 @@ export async function promptBranchSelection(
 /**
  * 提示选择目标分支
  */
-export async function promptTargetBranch(branches: string[], currentBranch: string): Promise<string> {
+export async function promptTargetBranch(branches: string[], currentBranch: string): Promise<string | null> {
   console.log(dim(`Current branch: ${currentBranch}\n`))
 
   // 过滤掉当前分支
@@ -149,6 +215,11 @@ export async function promptTargetBranch(branches: string[], currentBranch: stri
     message: 'Select target branch (type to search):',
     mode: 'single',
   }) as string
+
+  if (targetBranch === '__CANCEL__') {
+    console.log(yellow('\n🚫 PR creation cancelled.'))
+    return null
+  }
 
   if (!targetBranch) {
     console.log(
