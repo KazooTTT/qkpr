@@ -349,13 +349,18 @@ async function handlePRCommand(): Promise<void> {
 
     if (shouldAutoMerge) {
       console.log(yellow(`\n🔄  Merging '${gitInfo.currentBranch}' to detect conflicts...`))
-      const mergeSuccess = mergeSourceToMergeBranch(gitInfo.currentBranch)
-      if (!mergeSuccess) {
-        console.log(yellow('\n⚠️  Merge conflicts detected! Please resolve them manually:'))
-        console.log(dim(`   1. Resolve conflicts in your editor`))
-        console.log(dim(`   2. Run: git add <resolved-files>`))
-        console.log(dim(`   3. Run: git commit`))
-        console.log(dim(`   4. Push the merge branch when ready`))
+      try {
+        const mergeSuccess = mergeSourceToMergeBranch(gitInfo.currentBranch)
+        if (!mergeSuccess) {
+          console.log(yellow('\n⚠️  Merge conflicts detected! Please resolve them manually:'))
+          console.log(dim(`   1. Resolve conflicts in your editor`))
+          console.log(dim(`   2. Run: git add <resolved-files>`))
+          console.log(dim(`   3. Run: git commit`))
+          console.log(dim(`   4. Push the merge branch when ready`))
+        }
+      } catch (error) {
+        // The error is already logged by the service function, so we can just return.
+        return
       }
     }
     else {
