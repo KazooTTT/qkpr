@@ -12,11 +12,13 @@ import {
   createPullRequest,
   getAllBranches,
   getGitInfo,
+  mergeSourceToMergeBranch,
 } from './services/pr.js'
 import { handleBranchCommand, handleCommitCommand, handleConfigCommand, handleConfigModelCommand, handleConfigPromptLangCommand, handleConfigPromptsCommand, isBranchPushed, pushBranchToRemote } from './utils/commit-cli.js'
 import { handleListPinnedCommand, handlePinCommand, handleUnpinCommand } from './utils/pin-cli.js'
 import {
   displayPRInfo,
+  promptAutoMergeSource,
   promptCreateMergeBranch,
   promptTargetBranch,
 } from './utils/pr-cli.js'
@@ -341,6 +343,36 @@ async function handlePRCommand(): Promise<void> {
     const success = createMergeBranch(targetBranch, prInfo.mergeBranchName)
     if (!success) {
       return // 返回主菜单而不是退出
+    }
+
+    // 询问是否要自动合并以检测冲突
+    const shouldAutoMerge = await promptAutoMergeSource(
+      gitInfo.currentBranch,
+      targetBranch,
+    )
+
+    if (shouldAutoMerge) {
+      console.log(yellow(`\n🔄  Merging '${gitInfo.currentBranch}' to detect conflicts...`))
+      try {
+        const mergeSuccess = mergeSourceToMergeBranch(gitInfo.currentBranch)
+        if (!mergeSuccess) {
+          console.log(yellow('\n⚠️  Merge conflicts detected! Please resolve them manually:'))
+          console.log(dim(`   1. Resolve conflicts in your editor`))
+          console.log(dim(`   2. Run: git add <resolved-files>`))
+          console.log(dim(`   3. Run: git commit`))
+          console.log(dim(`   4. Push the merge branch when ready`))
+        }
+      }
+      catch {
+        // The error is already logged by the service function, so we can just return.
+        return
+      }
+    }
+    else {
+      console.log(green(`\n✅  Merge branch '${prInfo.mergeBranchName}' created without merging.`))
+      console.log(dim(`   You can manually merge later when ready:`))
+      console.log(dim(`   git checkout ${prInfo.mergeBranchName}`))
+      console.log(dim(`   git merge ${gitInfo.currentBranch}`))
     }
   }
 

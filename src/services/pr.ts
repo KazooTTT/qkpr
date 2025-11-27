@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process'
 import { isIP } from 'is-ip'
-import { cyan, green, red } from 'kolorist'
+import { cyan, dim, green, red, yellow } from 'kolorist'
 
 export interface GitInfo {
   currentBranch: string
@@ -329,6 +329,38 @@ export function createMergeBranch(targetBranch: string, mergeBranchName: string)
   catch {
     console.log(red('❌  Failed to create merge branch'))
     return false
+  }
+}
+
+/**
+ * 合并原始分支到合并分支
+ */
+export function mergeSourceToMergeBranch(sourceBranch: string): boolean {
+  try {
+    console.log(cyan(`\n🔄  Merging source branch '${sourceBranch}' into current merge branch...`))
+
+    // 执行合并操作
+    execSync(`git merge ${sourceBranch}`, {
+      stdio: 'inherit',
+    })
+
+    console.log(green(`✅  Successfully merged '${sourceBranch}' into merge branch`))
+    return true
+  }
+  catch (error: any) {
+    // 检查是否是合并冲突
+    if (error.status === 1 && error.stdout?.includes('CONFLICT')) {
+      console.log(yellow(`⚠️  Merge conflicts detected!`))
+      console.log(dim(`   Please resolve conflicts manually and then run:`))
+      console.log(dim(`   git add <resolved-files>`))
+      console.log(dim(`   git commit`))
+      return false
+    }
+    else {
+      console.log(red('❌  Failed to merge source branch'))
+      console.log(dim(`Error: ${error.message || 'Unknown error'}`))
+      return false
+    }
   }
 }
 
