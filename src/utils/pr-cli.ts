@@ -47,6 +47,24 @@ export async function promptBranchSelection(
       // Get current pinned state for UI icons only
       const currentPinnedBranches = getPinnedBranches()
 
+      const addCancelOption = (list: any[]): void => {
+        list.push(new inquirer.Separator(' '))
+        list.push({
+          name: dim('  [Cancel PR creation]'),
+          value: '__CANCEL__',
+          short: 'Cancel',
+        })
+      }
+
+      const createBranchChoice = (branch: any): any => {
+        const isPinnedNow = currentPinnedBranches.includes(branch.name)
+        return {
+          name: `${isPinnedNow ? '📌' : '  '} ${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
+          value: branch.name,
+          short: branch.name,
+        }
+      }
+
       // Group 1: Initially Pinned Branches (Keep them at the top)
       const topGroupBranches = branchInfos.filter(b => sortingPinnedBranches.includes(b.name))
 
@@ -83,25 +101,32 @@ export async function promptBranchSelection(
       const allDisplayBranches = [...effectiveTopGroup, ...displayBottomGroup]
 
       allDisplayBranches.forEach((branch) => {
-        const isPinnedNow = currentPinnedBranches.includes(branch.name)
-        choices.push({
-          name: `${isPinnedNow ? '📌' : '  '} ${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
-          value: branch.name,
-          short: branch.name,
-        })
+        choices.push(createBranchChoice(branch))
       })
 
       // Add a cancel option at the end of the list, only if not in filterPinned mode
       if (!filterPinned) { // Only add cancel if we are showing all branches, otherwise it's weird to cancel from a filtered list.
-        choices.push(new inquirer.Separator(' ')) // Optional separator before cancel
-        choices.push({
-          name: dim('  [Cancel PR creation]'),
-          value: '__CANCEL__',
-          short: 'Cancel',
-        })
+        addCancelOption(choices)
       }
 
       const lowerInput = input.toLowerCase()
+
+      // If searching, search across ALL branches, not just the displayed ones
+      if (lowerInput.trim()) {
+        const searchResults = branchInfos.filter(branch =>
+          branch.name.toLowerCase().includes(lowerInput),
+        )
+
+        // Build choices from search results
+        const searchChoices: any[] = searchResults.map(createBranchChoice)
+
+        // Add cancel option
+        addCancelOption(searchChoices)
+
+        return searchChoices
+      }
+
+      // No search input, return the filtered list
       return choices.filter((choice: any) => {
         // Keep separators and cancel option
         if (!choice.value || choice.value === '__CANCEL__')

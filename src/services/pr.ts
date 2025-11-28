@@ -158,9 +158,15 @@ export function getBranchCategory(branchName: string): string {
 }
 
 /**
- * 获取分支详细信息（包含时间和分类）
+ * 获取分支详细信息（包含时间和分类）- 优化版本
  */
 export function getBranchesWithInfo(branches: string[]): BranchInfo[] {
+  // 如果分支数量很大，使用批量优化
+  if (branches.length > 50) {
+    return getBranchesWithInfoBatch(branches)
+  }
+
+  // 少量分支使用原逻辑
   return branches.map((branchName) => {
     const { timestamp, formatted } = getBranchLastCommitTime(branchName)
     return {
@@ -170,6 +176,100 @@ export function getBranchesWithInfo(branches: string[]): BranchInfo[] {
       category: getBranchCategory(branchName),
     }
   })
+}
+
+/**
+ * 批量获取分支信息，性能优化版本
+ */
+export function getBranchesWithInfoBatch(branches: string[]): BranchInfo[] {
+  try {
+    // 构建批量git命令：获取所有分支的最新提交时间
+    const batchCommand = branches.map((branch) => {
+      // 对远程分支优先，本地分支备用
+      return `git log -1 --format=%ct origin/${branch} 2>/dev/null || echo "0"`
+    }).join('; echo "---";')
+
+    const output = execSync(batchCommand, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    })
+
+    // 解析批量输出
+    const timestamps = output.split('---').map((line) => {
+      const timestamp = Number.parseInt(line.trim(), 10)
+      return Number.isNaN(timestamp) ? 0 : timestamp
+    })
+
+    return branches.map((branchName, index) => {
+      const timestamp = timestamps[index] || 0
+      const { formatted } = formatTimestamp(timestamp)
+      return {
+        name: branchName,
+        lastCommitTime: timestamp,
+        lastCommitTimeFormatted: formatted,
+        category: getBranchCategory(branchName),
+      }
+    })
+  }
+  catch (error) {
+    // 如果批量获取失败，降级到单个获取
+    console.warn('Batch fetch failed, falling back to individual fetch:', error)
+    return branches.map((branchName) => {
+      const { timestamp, formatted } = getBranchLastCommitTime(branchName)
+      return {
+        name: branchName,
+        lastCommitTime: timestamp,
+        lastCommitTimeFormatted: formatted,
+        category: getBranchCategory(branchName),
+      }
+    })
+  }
+}
+
+/**
+ * 格式化时间戳 - 提取为独立函数供批量版本使用
+ */
+export function formatTimestamp(timestamp: number): { timestamp: number, formatted: string } {
+  if (timestamp === 0) {
+    return { timestamp: 0, formatted: 'unknown' }
+  }
+
+  const date = new Date(timestamp * 1000)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  let formatted: string
+  if (diffDays === 0) {
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    if (diffHours === 0) {
+      const diffMinutes = Math.floor(diffMs / (1000 * 60))
+      formatted = diffMinutes <= 1 ? 'just now' : `${diffMinutes}m ago`
+    }
+    else {
+      formatted = `${diffHours}h ago`
+    }
+  }
+  else if (diffDays === 1) {
+    formatted = 'yesterday'
+  }
+  else if (diffDays < 7) {
+    formatted = `${diffDays}d ago`
+  }
+  else if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7)
+    formatted = `${weeks}w ago`
+  }
+  else if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30)
+    formatted = `${months}mo ago`
+  }
+  else {
+    const years = Math.floor(diffDays / 365)
+    formatted = `${years}y ago`
+  }
+
+  return { timestamp, formatted }
 }
 
 /**

@@ -48,6 +48,8 @@ You can directly access the PR creation feature:
 
 ```bash
 qkpr pr
+# or specify the target branch directly
+qkpr pr main
 ```
 
 The CLI will interactively guide you through creating a pull request:
@@ -189,7 +191,11 @@ Shows an interactive menu to choose from all available features
 qkpr pr
 ```
 
-Directly create a pull request with interactive branch selection
+Directly create a pull request with interactive branch selection. You can also specify the target branch directly:
+
+```bash
+qkpr pr [branch]
+```
 
 ### Generate Commit Message
 

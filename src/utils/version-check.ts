@@ -96,7 +96,7 @@ export async function promptForUpdate(
       type: 'confirm',
       name: 'shouldUpdate',
       message: 'Would you like to update now?',
-      default: false,
+      default: true,
     },
     {
       type: 'list',

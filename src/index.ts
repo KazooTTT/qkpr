@@ -250,7 +250,7 @@ async function promptPushBranch(branchName: string): Promise<boolean> {
 /**
  * 处理 PR 命令
  */
-async function handlePRCommand(): Promise<void> {
+async function handlePRCommand(targetBranchArg?: string): Promise<void> {
   printPRBanner()
 
   // 检查是否在 Git 仓库中
@@ -292,10 +292,27 @@ async function handlePRCommand(): Promise<void> {
   }
 
   // 选择目标分支
-  const targetBranch = await promptTargetBranch(
-    branches,
-    gitInfo.currentBranch,
-  )
+  let targetBranch: string | null = null
+
+  // 如果提供了目标分支参数，验证它是否存在
+  if (targetBranchArg) {
+    const branchExists = branches.includes(targetBranchArg)
+    if (branchExists) {
+      targetBranch = targetBranchArg
+      console.log(green(`✅  Using specified target branch: ${targetBranch}\n`))
+    }
+    else {
+      console.log(yellow(`⚠️  Branch '${targetBranchArg}' not found. Falling back to interactive selection.`))
+    }
+  }
+
+  // 如果没有目标分支（未提供参数或参数无效），则进行交互式选择
+  if (!targetBranch) {
+    targetBranch = await promptTargetBranch(
+      branches,
+      gitInfo.currentBranch,
+    )
+  }
 
   if (!targetBranch) {
     return // 返回主菜单而不是退出
@@ -391,11 +408,16 @@ const _argv = yargs(hideBin(process.argv))
     },
   )
   .command(
-    'pr',
+    'pr [branch]',
     '🔧  Create a Pull Request with interactive branch selection',
-    () => {},
-    async () => {
-      await handlePRCommand()
+    (yargs) => {
+      return yargs.positional('branch', {
+        describe: 'Target branch name',
+        type: 'string',
+      })
+    },
+    async (argv) => {
+      await handlePRCommand(argv.branch as string | undefined)
       await checkAndNotifyUpdate(packageName, version)
     },
   )

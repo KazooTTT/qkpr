@@ -371,10 +371,9 @@ class AutocompletePinPrompt extends Base {
       this.render()
     }
     else {
-      this.render() // Render input automatically
-      // Only search if input have actually changed, not because of other keypresses
+      // Only render and search if input have actually changed, not because of other keypresses
       if (this.lastSearchTerm !== this.rl.line) {
-        this.search(this.rl.line) // Trigger new search
+        this.search(this.rl.line) // Trigger new search (which will call render)
       }
     }
   }
