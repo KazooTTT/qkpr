@@ -102,6 +102,35 @@ export async function promptBranchSelection(
       }
 
       const lowerInput = input.toLowerCase()
+
+      // If searching, search across ALL branches, not just the displayed ones
+      if (lowerInput.trim()) {
+        const searchResults = branchInfos.filter(branch =>
+          branch.name.toLowerCase().includes(lowerInput),
+        )
+
+        // Build choices from search results
+        const searchChoices: any[] = searchResults.map((branch) => {
+          const isPinnedNow = currentPinnedBranches.includes(branch.name)
+          return {
+            name: `${isPinnedNow ? '📌' : '  '} ${branch.name.padEnd(45)} ${dim(`(${branch.lastCommitTimeFormatted})`)}`,
+            value: branch.name,
+            short: branch.name,
+          }
+        })
+
+        // Add cancel option
+        searchChoices.push(new inquirer.Separator(' '))
+        searchChoices.push({
+          name: dim('  [Cancel PR creation]'),
+          value: '__CANCEL__',
+          short: 'Cancel',
+        })
+
+        return searchChoices
+      }
+
+      // No search input, return the filtered list
       return choices.filter((choice: any) => {
         // Keep separators and cancel option
         if (!choice.value || choice.value === '__CANCEL__')
