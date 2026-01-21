@@ -24,6 +24,38 @@ pnpm add -g qkpr
 yarn global add qkpr
 ```
 
+## Claude Code Integration
+
+qkpr provides a Claude Code skill for better AI assistant integration. To install:
+
+### Global Installation (Recommended)
+
+```bash
+# From npm (if installed globally)
+cp -r $(npm root -g)/qkpr/skills/qkpr ~/.claude/skills/
+
+# From pnpm
+cp -r $(pnpm root -g)/qkpr/skills/qkpr ~/.claude/skills/
+
+# Or download directly
+mkdir -p ~/.claude/skills/qkpr
+curl -o ~/.claude/skills/qkpr/SKILL.md \
+  https://raw.githubusercontent.com/KazooTTT/qkpr/main/skills/qkpr/SKILL.md
+```
+
+### Project-Specific Installation
+
+```bash
+mkdir -p .claude/skills/qkpr
+curl -o .claude/skills/qkpr/SKILL.md \
+  https://raw.githubusercontent.com/KazooTTT/qkpr/main/skills/qkpr/SKILL.md
+```
+
+Once installed, you can ask Claude Code to:
+- "Create a PR for this branch using qkpr"
+- "Generate a commit message with qkpr"
+- "Suggest a branch name for my changes"
+
 ## Usage
 
 ### Interactive Menu
