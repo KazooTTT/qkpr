@@ -76,6 +76,64 @@ function compareVersions(v1: string, v2: string): number {
 }
 
 /**
+ * Detect the package manager used to install qkpr globally
+ * Returns: 'npm', 'pnpm', 'yarn', or 'bun' (defaults to 'npm')
+ */
+function detectPackageManager(): string {
+  const packageName = 'qkpr'
+
+  try {
+    const npmResult = execSync(`npm list -g ${packageName}`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    })
+    if (npmResult.includes(packageName)) {
+      return 'npm'
+    }
+  }
+  catch {
+  }
+
+  try {
+    const pnpmResult = execSync(`pnpm list -g ${packageName}`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    })
+    if (pnpmResult.includes(packageName)) {
+      return 'pnpm'
+    }
+  }
+  catch {
+  }
+
+  try {
+    const yarnResult = execSync(`yarn global list`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    })
+    if (yarnResult.includes(`"${packageName}"`) || yarnResult.includes(`'${packageName}'`)) {
+      return 'yarn'
+    }
+  }
+  catch {
+  }
+
+  try {
+    const bunResult = execSync(`bun pm ls -g`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    })
+    if (bunResult.includes(packageName)) {
+      return 'bun'
+    }
+  }
+  catch {
+  }
+
+  return 'npm'
+}
+
+/**
  * Display update notification and prompt user to update
  */
 export async function promptForUpdate(
@@ -91,26 +149,19 @@ export async function promptForUpdate(
   console.log(dim(`  Current version: ${result.currentVersion}`))
   console.log(green(`  Latest version:  ${result.latestVersion}\n`))
 
-  const { shouldUpdate, packageManager } = await inquirer.prompt([
+  const { shouldUpdate } = await inquirer.prompt([
     {
       type: 'confirm',
       name: 'shouldUpdate',
       message: 'Would you like to update now?',
       default: true,
     },
-    {
-      type: 'list',
-      name: 'packageManager',
-      message: 'Select package manager:',
-      choices: ['npm', 'pnpm', 'yarn'],
-      default: 'npm',
-      when: (answers: any) => answers.shouldUpdate,
-    },
   ])
 
   if (shouldUpdate) {
     try {
-      console.log(cyan(`\n⏳  Updating ${packageName}...\n`))
+      const packageManager = detectPackageManager()
+      console.log(cyan(`\n⏳  Updating ${packageName} using ${packageManager}...\n`))
 
       let command: string
       if (packageManager === 'npm') {
@@ -119,8 +170,14 @@ export async function promptForUpdate(
       else if (packageManager === 'pnpm') {
         command = `pnpm add -g ${packageName}`
       }
-      else {
+      else if (packageManager === 'yarn') {
         command = `yarn global add ${packageName}`
+      }
+      else if (packageManager === 'bun') {
+        command = `bun add -g ${packageName}`
+      }
+      else {
+        command = `npm install -g ${packageName}`
       }
 
       execSync(command, { stdio: 'inherit' })
@@ -132,12 +189,16 @@ export async function promptForUpdate(
       console.log(red('\n❌  Failed to update. Please try manually:'))
       console.log(dim(`  npm install -g ${packageName}`))
       console.log(dim(`  or: pnpm add -g ${packageName}`))
-      console.log(dim(`  or: yarn global add ${packageName}\n`))
+      console.log(dim(`  or: yarn global add ${packageName}`))
+      console.log(dim(`  or: bun add -g ${packageName}\n`))
     }
   }
   else {
     console.log(dim('\nYou can update later by running:'))
-    console.log(yellow(`  npm install -g ${packageName}\n`))
+    console.log(yellow(`  npm install -g ${packageName}`))
+    console.log(dim(`  or: pnpm add -g ${packageName}`))
+    console.log(dim(`  or: yarn global add ${packageName}`))
+    console.log(dim(`  or: bun add -g ${packageName}\n`))
   }
 }
 

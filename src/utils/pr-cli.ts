@@ -268,7 +268,7 @@ export async function promptCreateMergeBranch(mergeBranchName: string): Promise<
       type: 'confirm',
       name: 'createMergeBranch',
       message: 'Do you want to create a merge branch for conflict resolution?',
-      default: true,
+      default: false,
     },
   ])
 
