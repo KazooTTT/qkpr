@@ -106,9 +106,46 @@ describe('merge branch cleanup', () => {
     })
 
     expect(deleteMergeBranches(['merge/feature-to-main', 'feature/not-allowed'])).toEqual({
-      deleted: ['merge/feature-to-main'],
-      failed: ['feature/not-allowed'],
+      localDeleted: ['merge/feature-to-main'],
+      remoteDeleted: [],
+      localFailed: ['feature/not-allowed'],
+      remoteFailed: [],
     })
     expect(commands).toEqual(['git branch -D merge/feature-to-main'])
+  })
+
+  it('can delete both local and remote merge branches and report each side separately', () => {
+    const commands: string[] = []
+
+    execSyncMock.mockImplementation((command: string) => {
+      commands.push(command)
+
+      if (command === 'git branch -D merge/feature-to-main')
+        return ''
+      if (command === 'git push origin --delete merge/feature-to-main')
+        return ''
+      if (command === 'git branch -D merge/feature-to-pre')
+        throw new Error('missing local branch')
+      if (command === 'git push origin --delete merge/feature-to-pre')
+        return ''
+
+      throw new Error(`Unexpected command: ${command}`)
+    })
+
+    expect(deleteMergeBranches(
+      ['merge/feature-to-main', 'merge/feature-to-pre'],
+      { remote: true },
+    )).toEqual({
+      localDeleted: ['merge/feature-to-main'],
+      remoteDeleted: ['merge/feature-to-main', 'merge/feature-to-pre'],
+      localFailed: ['merge/feature-to-pre'],
+      remoteFailed: [],
+    })
+    expect(commands).toEqual([
+      'git branch -D merge/feature-to-main',
+      'git push origin --delete merge/feature-to-main',
+      'git branch -D merge/feature-to-pre',
+      'git push origin --delete merge/feature-to-pre',
+    ])
   })
 })

@@ -294,6 +294,22 @@ export async function promptDeleteMergeBranches(branches: string[]): Promise<str
 }
 
 /**
+ * 确认是否同时删除远端 merge 分支
+ */
+export async function promptDeleteRemoteMergeBranches(): Promise<boolean> {
+  const { deleteRemote } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'deleteRemote',
+      message: 'Also delete the corresponding remote branches on origin?',
+      default: false,
+    },
+  ])
+
+  return deleteRemote
+}
+
+/**
  * 确认是否自动合并原始分支到合并分支
  */
 export async function promptAutoMergeSource(sourceBranch: string, targetBranch: string): Promise<boolean> {

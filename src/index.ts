@@ -24,6 +24,7 @@ import {
   promptAutoMergeSource,
   promptCreateMergeBranch,
   promptDeleteMergeBranches,
+  promptDeleteRemoteMergeBranches,
   promptTargetBranch,
 } from './utils/pr-cli.js'
 import { checkAndNotifyUpdate } from './utils/version-check.js'
@@ -113,7 +114,8 @@ async function showSettingsMenu(): Promise<void> {
   }
 }
 
-async function handleDeleteMergeBranchCommand(branchArg?: string): Promise<void> {
+async function handleDeleteMergeBranchCommand(branchArg?: string, options: { remote?: boolean } = {}): Promise<void> {
+  const { remote = false } = options
   const gitInfo = getGitInfo()
   if (!gitInfo.isGitRepo) {
     console.log(red('❌  Not a Git repository'))
@@ -122,11 +124,12 @@ async function handleDeleteMergeBranchCommand(branchArg?: string): Promise<void>
   }
 
   let branchesToDelete: string[] = []
+  let shouldDeleteRemote = remote
 
   if (branchArg) {
     if (!isMergeBranchName(branchArg)) {
       console.log(red(`❌  '${branchArg}' is not a merge branch.`))
-      console.log(dim('Only local branches starting with "merge/" can be deleted.\n'))
+      console.log(dim('Only branches starting with "merge/" can be deleted.\n'))
       return
     }
 
@@ -149,18 +152,32 @@ async function handleDeleteMergeBranchCommand(branchArg?: string): Promise<void>
     if (branchesToDelete.length === 0) {
       return
     }
+
+    if (!remote) {
+      shouldDeleteRemote = await promptDeleteRemoteMergeBranches()
+    }
   }
 
-  const result = deleteMergeBranches(branchesToDelete)
+  const result = deleteMergeBranches(branchesToDelete, { remote: shouldDeleteRemote })
 
-  if (result.deleted.length > 0) {
-    console.log(green(`\n✅  Deleted ${result.deleted.length} merge branch(es):`))
-    result.deleted.forEach(branch => console.log(dim(`   ${branch}`)))
+  if (result.localDeleted.length > 0) {
+    console.log(green(`\n✅  Deleted ${result.localDeleted.length} local merge branch(es):`))
+    result.localDeleted.forEach(branch => console.log(dim(`   [local] ${branch}`)))
   }
 
-  if (result.failed.length > 0) {
-    console.log(yellow(`\n⚠️  Failed to delete ${result.failed.length} branch(es):`))
-    result.failed.forEach(branch => console.log(dim(`   ${branch}`)))
+  if (result.remoteDeleted.length > 0) {
+    console.log(green(`\n✅  Deleted ${result.remoteDeleted.length} remote merge branch(es):`))
+    result.remoteDeleted.forEach(branch => console.log(dim(`   [remote] origin/${branch}`)))
+  }
+
+  if (result.localFailed.length > 0) {
+    console.log(yellow(`\n⚠️  Failed to delete ${result.localFailed.length} local branch(es):`))
+    result.localFailed.forEach(branch => console.log(dim(`   [local] ${branch}`)))
+  }
+
+  if (result.remoteFailed.length > 0) {
+    console.log(yellow(`\n⚠️  Failed to delete ${result.remoteFailed.length} remote branch(es):`))
+    result.remoteFailed.forEach(branch => console.log(dim(`   [remote] origin/${branch}`)))
   }
 
   console.log('')
@@ -503,15 +520,24 @@ const _argv = yargs(hideBin(process.argv))
   )
   .command(
     'del [branch]',
-    '🗑️  Delete local merge branches',
+    '🗑️  Delete merge branches locally, with optional remote deletion',
     (yargs) => {
-      return yargs.positional('branch', {
-        describe: 'Specific merge branch to delete',
-        type: 'string',
-      })
+      return yargs
+        .positional('branch', {
+          describe: 'Specific merge branch to delete',
+          type: 'string',
+        })
+        .option('remote', {
+          alias: 'r',
+          describe: 'Also delete the remote branch on origin',
+          type: 'boolean',
+          default: false,
+        })
     },
     async (argv) => {
-      await handleDeleteMergeBranchCommand(argv.branch as string | undefined)
+      await handleDeleteMergeBranchCommand(argv.branch as string | undefined, {
+        remote: argv.remote as boolean | undefined,
+      })
       await checkAndNotifyUpdate(packageName, version)
     },
   )

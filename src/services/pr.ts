@@ -24,8 +24,10 @@ export interface BranchInfo {
 }
 
 export interface DeleteBranchesResult {
-  deleted: string[]
-  failed: string[]
+  localDeleted: string[]
+  remoteDeleted: string[]
+  localFailed: string[]
+  remoteFailed: string[]
 }
 
 /**
@@ -546,17 +548,22 @@ export function mergeSourceToMergeBranch(sourceBranch: string): boolean {
 }
 
 /**
- * 删除本地 merge 分支
+ * 删除 merge 分支，可选同时删除远端
  */
-export function deleteMergeBranches(branches: string[]): DeleteBranchesResult {
+export function deleteMergeBranches(branches: string[], options: { remote?: boolean } = {}): DeleteBranchesResult {
+  const { remote = false } = options
   const result: DeleteBranchesResult = {
-    deleted: [],
-    failed: [],
+    localDeleted: [],
+    remoteDeleted: [],
+    localFailed: [],
+    remoteFailed: [],
   }
 
   for (const branch of branches) {
     if (!isMergeBranchName(branch)) {
-      result.failed.push(branch)
+      result.localFailed.push(branch)
+      if (remote)
+        result.remoteFailed.push(branch)
       continue
     }
 
@@ -564,10 +571,23 @@ export function deleteMergeBranches(branches: string[]): DeleteBranchesResult {
       execSync(`git branch -D ${branch}`, {
         stdio: 'inherit',
       })
-      result.deleted.push(branch)
+      result.localDeleted.push(branch)
     }
     catch {
-      result.failed.push(branch)
+      result.localFailed.push(branch)
+    }
+
+    if (!remote)
+      continue
+
+    try {
+      execSync(`git push origin --delete ${branch}`, {
+        stdio: 'inherit',
+      })
+      result.remoteDeleted.push(branch)
+    }
+    catch {
+      result.remoteFailed.push(branch)
     }
   }
 
