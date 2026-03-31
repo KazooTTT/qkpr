@@ -10,8 +10,11 @@ import {
   copyToClipboard,
   createMergeBranch,
   createPullRequest,
+  deleteMergeBranches,
   getAllBranches,
   getGitInfo,
+  getMergeBranches,
+  isMergeBranchName,
   mergeSourceToMergeBranch,
 } from './services/pr.js'
 import { handleBranchCommand, handleCommitCommand, handleConfigCommand, handleConfigModelCommand, handleConfigPromptLangCommand, handleConfigPromptsCommand, isBranchPushed, pushBranchToRemote } from './utils/commit-cli.js'
@@ -20,6 +23,7 @@ import {
   displayPRInfo,
   promptAutoMergeSource,
   promptCreateMergeBranch,
+  promptDeleteMergeBranches,
   promptTargetBranch,
 } from './utils/pr-cli.js'
 import { checkAndNotifyUpdate } from './utils/version-check.js'
@@ -109,6 +113,59 @@ async function showSettingsMenu(): Promise<void> {
   }
 }
 
+async function handleDeleteMergeBranchCommand(branchArg?: string): Promise<void> {
+  const gitInfo = getGitInfo()
+  if (!gitInfo.isGitRepo) {
+    console.log(red('❌  Not a Git repository'))
+    console.log(dim('Please run this command in a Git repository.\n'))
+    return
+  }
+
+  let branchesToDelete: string[] = []
+
+  if (branchArg) {
+    if (!isMergeBranchName(branchArg)) {
+      console.log(red(`❌  '${branchArg}' is not a merge branch.`))
+      console.log(dim('Only local branches starting with "merge/" can be deleted.\n'))
+      return
+    }
+
+    if (branchArg === gitInfo.currentBranch) {
+      console.log(red(`❌  Cannot delete the current branch '${branchArg}'.`))
+      console.log(dim('Checkout another branch and try again.\n'))
+      return
+    }
+
+    branchesToDelete = [branchArg]
+  }
+  else {
+    const mergeBranches = getMergeBranches(gitInfo.currentBranch)
+    if (mergeBranches.length === 0) {
+      console.log(yellow('⚠️  No merge branches found to delete.\n'))
+      return
+    }
+
+    branchesToDelete = await promptDeleteMergeBranches(mergeBranches)
+    if (branchesToDelete.length === 0) {
+      return
+    }
+  }
+
+  const result = deleteMergeBranches(branchesToDelete)
+
+  if (result.deleted.length > 0) {
+    console.log(green(`\n✅  Deleted ${result.deleted.length} merge branch(es):`))
+    result.deleted.forEach(branch => console.log(dim(`   ${branch}`)))
+  }
+
+  if (result.failed.length > 0) {
+    console.log(yellow(`\n⚠️  Failed to delete ${result.failed.length} branch(es):`))
+    result.failed.forEach(branch => console.log(dim(`   ${branch}`)))
+  }
+
+  console.log('')
+}
+
 async function showMainMenu(): Promise<void> {
   // Check for updates at the start of main menu
   await checkAndNotifyUpdate(packageName, version)
@@ -166,8 +223,9 @@ async function showMainMenu(): Promise<void> {
         { name: '1. 🔧  Create Pull Request', value: 'pr', key: '1' },
         { name: '2. 🤖  Generate Commit Message', value: 'commit', key: '2' },
         { name: '3. 🌿  Generate Branch Name', value: 'branch', key: '3' },
-        { name: '4. 📌  Manage Pinned Branches', value: 'pinned', key: '4' },
-        { name: '5. ⚙️   Settings', value: 'settings', key: '5' },
+        { name: '4. 🗑️  Delete Merge Branches', value: 'del', key: '4' },
+        { name: '5. 📌  Manage Pinned Branches', value: 'pinned', key: '5' },
+        { name: '6. ⚙️   Settings', value: 'settings', key: '6' },
         new inquirer.Separator(),
         { name: '❌  Exit', value: 'exit' },
       ],
@@ -186,6 +244,10 @@ async function showMainMenu(): Promise<void> {
     case 'branch':
       await handleBranchCommand()
       await showMainMenu() // 回到首页
+      break
+    case 'del':
+      await handleDeleteMergeBranchCommand()
+      await showMainMenu()
       break
     case 'pinned':
       await showPinnedBranchesMenu()
@@ -436,6 +498,20 @@ const _argv = yargs(hideBin(process.argv))
     () => {},
     async () => {
       await handleBranchCommand()
+      await checkAndNotifyUpdate(packageName, version)
+    },
+  )
+  .command(
+    'del [branch]',
+    '🗑️  Delete local merge branches',
+    (yargs) => {
+      return yargs.positional('branch', {
+        describe: 'Specific merge branch to delete',
+        type: 'string',
+      })
+    },
+    async (argv) => {
+      await handleDeleteMergeBranchCommand(argv.branch as string | undefined)
       await checkAndNotifyUpdate(packageName, version)
     },
   )

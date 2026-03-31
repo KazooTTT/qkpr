@@ -23,6 +23,11 @@ export interface BranchInfo {
   category: string
 }
 
+export interface DeleteBranchesResult {
+  deleted: string[]
+  failed: string[]
+}
+
 /**
  * 获取当前 Git 仓库信息
  */
@@ -73,6 +78,22 @@ export function getAllBranches(): string[] {
   catch {
     return []
   }
+}
+
+/**
+ * 判断是否为 merge 临时分支
+ */
+export function isMergeBranchName(branchName: string): boolean {
+  return branchName.startsWith('merge/')
+}
+
+/**
+ * 获取所有 merge/ 开头的本地分支
+ */
+export function getMergeBranches(currentBranch?: string): string[] {
+  return getAllBranches()
+    .filter(isMergeBranchName)
+    .filter(branch => branch !== currentBranch)
 }
 
 /**
@@ -407,17 +428,77 @@ export function generateMergeBranchName(sourceBranch: string, targetBranch: stri
 }
 
 /**
- * 切换到目标分支并创建合并分支
+ * 检查 ref 是否存在
+ */
+function refExists(ref: string): boolean {
+  try {
+    execSync(`git rev-parse --verify ${ref}`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    })
+    return true
+  }
+  catch {
+    return false
+  }
+}
+
+/**
+ * 尝试刷新远程目标分支，确保 merge branch 基于最新远程提交创建
+ */
+function refreshRemoteTargetBranch(targetBranch: string): boolean {
+  try {
+    execSync(`git fetch origin refs/heads/${targetBranch}:refs/remotes/origin/${targetBranch}`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'inherit'],
+    })
+    return true
+  }
+  catch {
+    return false
+  }
+}
+
+/**
+ * Resolve a ref for `git branch <new> <start>` without checking out the target.
+ * Works when the target branch is already checked out in another worktree.
+ * Prefers the latest origin/<name>, then local refs/heads/<name>.
+ */
+function resolveMergeBranchStartPoint(targetBranch: string): string {
+  const remoteRef = `refs/remotes/origin/${targetBranch}`
+  const localRef = `refs/heads/${targetBranch}`
+  const remoteRefName = `origin/${targetBranch}`
+
+  refreshRemoteTargetBranch(targetBranch)
+
+  if (refExists(remoteRef)) {
+    return remoteRefName
+  }
+
+  if (refExists(localRef)) {
+    return targetBranch
+  }
+
+  return remoteRefName
+}
+
+/**
+ * 基于目标分支创建合并分支（不 checkout 目标分支，避免 worktree 占用冲突）
  */
 export function createMergeBranch(targetBranch: string, mergeBranchName: string): boolean {
   try {
-    console.log(cyan(`\n🔀  Switching to target branch: ${targetBranch}`))
-    execSync(`git checkout ${targetBranch}`, {
+    const startPoint = resolveMergeBranchStartPoint(targetBranch)
+    const sourceLabel = startPoint === targetBranch ? `${targetBranch} (local fallback)` : targetBranch
+    console.log(
+      cyan(
+        `\n🌿  Creating merge branch: ${mergeBranchName} from ${sourceLabel}${startPoint !== targetBranch ? ` (${startPoint})` : ''}`,
+      ),
+    )
+    execSync(`git branch ${mergeBranchName} ${startPoint}`, {
       stdio: 'inherit',
     })
 
-    console.log(cyan(`🌿  Creating merge branch: ${mergeBranchName}`))
-    execSync(`git checkout -b ${mergeBranchName}`, {
+    execSync(`git checkout ${mergeBranchName}`, {
       stdio: 'inherit',
     })
 
@@ -462,6 +543,35 @@ export function mergeSourceToMergeBranch(sourceBranch: string): boolean {
       return false
     }
   }
+}
+
+/**
+ * 删除本地 merge 分支
+ */
+export function deleteMergeBranches(branches: string[]): DeleteBranchesResult {
+  const result: DeleteBranchesResult = {
+    deleted: [],
+    failed: [],
+  }
+
+  for (const branch of branches) {
+    if (!isMergeBranchName(branch)) {
+      result.failed.push(branch)
+      continue
+    }
+
+    try {
+      execSync(`git branch -D ${branch}`, {
+        stdio: 'inherit',
+      })
+      result.deleted.push(branch)
+    }
+    catch {
+      result.failed.push(branch)
+    }
+  }
+
+  return result
 }
 
 /**

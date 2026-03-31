@@ -276,6 +276,24 @@ export async function promptCreateMergeBranch(mergeBranchName: string): Promise<
 }
 
 /**
+ * 提示选择要删除的 merge 分支
+ */
+export async function promptDeleteMergeBranches(branches: string[]): Promise<string[]> {
+  const selectedBranches = await promptBranchSelection(branches, {
+    title: '🗑️  Merge Branch Cleanup',
+    message: 'Select merge branches to delete:',
+    mode: 'multiple',
+  }) as string[]
+
+  const validBranches = selectedBranches.filter(branch => branch !== '__CANCEL__')
+  if (validBranches.length === 0) {
+    console.log(yellow('\n🚫 No merge branches selected for deletion.'))
+  }
+
+  return validBranches
+}
+
+/**
  * 确认是否自动合并原始分支到合并分支
  */
 export async function promptAutoMergeSource(sourceBranch: string, targetBranch: string): Promise<boolean> {
