@@ -20,6 +20,8 @@ describe('createMergeBranch', () => {
     execSyncMock.mockImplementation((command: string) => {
       commands.push(command)
 
+      if (command === 'git rev-parse --verify refs/heads/merge/feature-to-main')
+        throw new Error('missing merge branch')
       if (command === 'git fetch origin refs/heads/main:refs/remotes/origin/main')
         return ''
       if (command === 'git rev-parse --verify refs/remotes/origin/main')
@@ -34,6 +36,7 @@ describe('createMergeBranch', () => {
 
     expect(createMergeBranch('main', 'merge/feature-to-main')).toBe(true)
     expect(commands).toEqual([
+      'git rev-parse --verify refs/heads/merge/feature-to-main',
       'git fetch origin refs/heads/main:refs/remotes/origin/main',
       'git rev-parse --verify refs/remotes/origin/main',
       'git branch merge/feature-to-main origin/main',
@@ -47,6 +50,8 @@ describe('createMergeBranch', () => {
     execSyncMock.mockImplementation((command: string) => {
       commands.push(command)
 
+      if (command === 'git rev-parse --verify refs/heads/merge/feature-to-release')
+        throw new Error('missing merge branch')
       if (command === 'git fetch origin refs/heads/release:refs/remotes/origin/release')
         throw new Error('fetch failed')
       if (command === 'git rev-parse --verify refs/remotes/origin/release')
@@ -63,11 +68,42 @@ describe('createMergeBranch', () => {
 
     expect(createMergeBranch('release', 'merge/feature-to-release')).toBe(true)
     expect(commands).toEqual([
+      'git rev-parse --verify refs/heads/merge/feature-to-release',
       'git fetch origin refs/heads/release:refs/remotes/origin/release',
       'git rev-parse --verify refs/remotes/origin/release',
       'git rev-parse --verify refs/heads/release',
       'git branch merge/feature-to-release release',
       'git checkout merge/feature-to-release',
+    ])
+  })
+
+  it('checks out the existing merge branch and hard resets it to the target base', () => {
+    const commands: string[] = []
+
+    execSyncMock.mockImplementation((command: string) => {
+      commands.push(command)
+
+      if (command === 'git rev-parse --verify refs/heads/merge/feature-to-main')
+        return ''
+      if (command === 'git fetch origin refs/heads/main:refs/remotes/origin/main')
+        return ''
+      if (command === 'git rev-parse --verify refs/remotes/origin/main')
+        return ''
+      if (command === 'git checkout merge/feature-to-main')
+        return ''
+      if (command === 'git reset --hard origin/main')
+        return ''
+
+      throw new Error(`Unexpected command: ${command}`)
+    })
+
+    expect(createMergeBranch('main', 'merge/feature-to-main')).toBe(true)
+    expect(commands).toEqual([
+      'git rev-parse --verify refs/heads/merge/feature-to-main',
+      'git fetch origin refs/heads/main:refs/remotes/origin/main',
+      'git rev-parse --verify refs/remotes/origin/main',
+      'git checkout merge/feature-to-main',
+      'git reset --hard origin/main',
     ])
   })
 })

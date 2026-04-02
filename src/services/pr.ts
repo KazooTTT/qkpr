@@ -489,6 +489,36 @@ function resolveMergeBranchStartPoint(targetBranch: string): string {
  */
 export function createMergeBranch(targetBranch: string, mergeBranchName: string): boolean {
   try {
+    const mergeBranchRef = `refs/heads/${mergeBranchName}`
+
+    if (refExists(mergeBranchRef)) {
+      const startPoint = resolveMergeBranchStartPoint(targetBranch)
+      const sourceLabel = startPoint === targetBranch ? `${targetBranch} (local fallback)` : targetBranch
+
+      console.log(
+        cyan(`\n🌿  Merge branch already exists locally, checking out: ${mergeBranchName}`),
+      )
+
+      execSync(`git checkout ${mergeBranchName}`, {
+        stdio: 'inherit',
+      })
+
+      console.log(
+        cyan(
+          `🔄  Resetting existing merge branch to ${sourceLabel}${startPoint !== targetBranch ? ` (${startPoint})` : ''}`,
+        ),
+      )
+
+      execSync(`git reset --hard ${startPoint}`, {
+        stdio: 'inherit',
+      })
+
+      console.log(
+        green(`✅  Switched to existing merge branch and reset to target base: ${mergeBranchName}\n`),
+      )
+      return true
+    }
+
     const startPoint = resolveMergeBranchStartPoint(targetBranch)
     const sourceLabel = startPoint === targetBranch ? `${targetBranch} (local fallback)` : targetBranch
     console.log(
