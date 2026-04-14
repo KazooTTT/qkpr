@@ -329,8 +329,12 @@ async function promptPushBranch(branchName: string): Promise<boolean> {
 /**
  * 处理 PR 命令
  */
-async function handlePRCommand(targetBranchArg?: string): Promise<void> {
+async function handlePRCommand(
+  targetBranchArg?: string,
+  options: { skip?: boolean } = {},
+): Promise<void> {
   printPRBanner()
+  const { skip = false } = options
 
   // 检查是否在 Git 仓库中
   const gitInfo = getGitInfo()
@@ -347,9 +351,7 @@ async function handlePRCommand(targetBranchArg?: string): Promise<void> {
   // 检查当前分支是否已推送到远程
   if (!isBranchPushed(gitInfo.currentBranch)) {
     console.log(yellow(`⚠️  Current branch '${gitInfo.currentBranch}' is not pushed to remote.`))
-    const shouldPush = await promptPushBranch(gitInfo.currentBranch)
-
-    if (shouldPush) {
+    if (skip) {
       const pushSuccess = pushBranchToRemote(gitInfo.currentBranch)
       if (!pushSuccess) {
         console.log(red('❌  Cannot create PR without pushing branch to remote.'))
@@ -357,9 +359,20 @@ async function handlePRCommand(targetBranchArg?: string): Promise<void> {
       }
     }
     else {
-      console.log(yellow('⚠️  PR creation skipped because branch is not pushed to remote.'))
-      console.log(dim('Please push the branch manually and try again.\n'))
-      return // 返回主菜单而不是退出
+      const shouldPush = await promptPushBranch(gitInfo.currentBranch)
+
+      if (shouldPush) {
+        const pushSuccess = pushBranchToRemote(gitInfo.currentBranch)
+        if (!pushSuccess) {
+          console.log(red('❌  Cannot create PR without pushing branch to remote.'))
+          return // 返回主菜单而不是退出
+        }
+      }
+      else {
+        console.log(yellow('⚠️  PR creation skipped because branch is not pushed to remote.'))
+        console.log(dim('Please push the branch manually and try again.\n'))
+        return // 返回主菜单而不是退出
+      }
     }
   }
 
@@ -430,6 +443,11 @@ async function handlePRCommand(targetBranchArg?: string): Promise<void> {
     console.log(dim(`Please open manually: ${prInfo.prUrl}`))
   }
 
+  if (skip) {
+    console.log(green('\n🎉  PR created and opened. Skipped merge-branch and conflict checks.\n'))
+    return
+  }
+
   // 询问是否创建合并分支
   const shouldCreateMergeBranch = await promptCreateMergeBranch(
     prInfo.mergeBranchName,
@@ -490,13 +508,19 @@ const _argv = yargs(hideBin(process.argv))
     'pr [branch]',
     '🔧  Create a Pull Request with interactive branch selection',
     (yargs) => {
-      return yargs.positional('branch', {
-        describe: 'Target branch name',
-        type: 'string',
-      })
+      return yargs
+        .positional('branch', {
+          describe: 'Target branch name',
+          type: 'string',
+        })
+        .option('skip', {
+          describe: 'Skip creating merge branch / conflict checks (open PR link only)',
+          type: 'boolean',
+          default: false,
+        })
     },
     async (argv) => {
-      await handlePRCommand(argv.branch as string | undefined)
+      await handlePRCommand(argv.branch as string | undefined, { skip: argv.skip as boolean | undefined })
       await checkAndNotifyUpdate(packageName, version)
     },
   )
