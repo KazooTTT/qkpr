@@ -11,9 +11,11 @@ import {
   createMergeBranch,
   createPullRequest,
   deleteMergeBranches,
+  fastForwardLocalTarget,
   getAllBranches,
   getGitInfo,
   getMergeBranches,
+  getTargetSyncStatus,
   isMergeBranchName,
   mergeSourceToMergeBranch,
 } from './services/pr.js'
@@ -25,6 +27,7 @@ import {
   promptCreateMergeBranch,
   promptDeleteMergeBranches,
   promptDeleteRemoteMergeBranches,
+  promptPullTargetBranch,
   promptTargetBranch,
 } from './utils/pr-cli.js'
 import { checkAndNotifyUpdate } from './utils/version-check.js'
@@ -454,6 +457,25 @@ async function handlePRCommand(
   )
 
   if (shouldCreateMergeBranch) {
+    // 若本地 target 落后于远程且可快进，提示是否先快进，保证 merge 分支基于最新的 target
+    const syncStatus = getTargetSyncStatus(targetBranch)
+    if (syncStatus.canFastForward) {
+      const shouldPull = await promptPullTargetBranch(targetBranch, syncStatus.behind)
+      if (shouldPull) {
+        const ok = fastForwardLocalTarget(targetBranch)
+        if (ok) {
+          console.log(green(`✅  Fast-forwarded local '${targetBranch}' to origin/${targetBranch}`))
+        }
+        else {
+          console.log(yellow(`⚠️  Could not fast-forward '${targetBranch}' (it may be checked out elsewhere). Using local '${targetBranch}' as-is.`))
+        }
+      }
+    }
+    else if (syncStatus.behind > 0 && syncStatus.ahead > 0) {
+      console.log(yellow(`\n⚠️  Local '${targetBranch}' and origin/${targetBranch} have diverged (${syncStatus.ahead} ahead, ${syncStatus.behind} behind).`))
+      console.log(dim(`   The merge branch will use your local '${targetBranch}'. Reconcile with 'git pull' if you want the latest remote base.`))
+    }
+
     const success = createMergeBranch(targetBranch, prInfo.mergeBranchName)
     if (!success) {
       return // 返回主菜单而不是退出

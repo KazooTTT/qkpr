@@ -462,23 +462,91 @@ function refreshRemoteTargetBranch(targetBranch: string): boolean {
 }
 
 /**
+ * 统计 commit range 内的提交数量，例如 a..b
+ */
+function countCommits(range: string): number {
+  try {
+    const out = execSync(`git rev-list --count ${range}`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    }).trim()
+    const count = Number.parseInt(out, 10)
+    return Number.isNaN(count) ? 0 : count
+  }
+  catch {
+    return 0
+  }
+}
+
+/**
+ * 获取本地 target 相对 origin/target 的同步状态（会先 fetch 刷新 origin）。
+ * - behind: origin 上有、本地没有的提交数
+ * - ahead: 本地有、origin 没有的提交数
+ * - canFastForward: 本地落后且未分叉，可安全快进
+ */
+export function getTargetSyncStatus(targetBranch: string): {
+  hasLocal: boolean
+  hasRemote: boolean
+  behind: number
+  ahead: number
+  canFastForward: boolean
+} {
+  const localRef = `refs/heads/${targetBranch}`
+  const remoteRef = `refs/remotes/origin/${targetBranch}`
+
+  refreshRemoteTargetBranch(targetBranch)
+
+  const hasLocal = refExists(localRef)
+  const hasRemote = refExists(remoteRef)
+
+  if (!hasLocal || !hasRemote) {
+    return { hasLocal, hasRemote, behind: 0, ahead: 0, canFastForward: false }
+  }
+
+  const behind = countCommits(`${localRef}..${remoteRef}`)
+  const ahead = countCommits(`${remoteRef}..${localRef}`)
+
+  return { hasLocal, hasRemote, behind, ahead, canFastForward: behind > 0 && ahead === 0 }
+}
+
+/**
+ * 快进更新本地 target 到 origin/target（不 checkout，因此兼容 target 被其它 worktree 占用的情况）。
+ * 仅在可快进时成功；分叉或分支被锁定时返回 false。
+ */
+export function fastForwardLocalTarget(targetBranch: string): boolean {
+  try {
+    execSync(`git fetch origin ${targetBranch}:${targetBranch}`, {
+      stdio: 'inherit',
+    })
+    return true
+  }
+  catch {
+    return false
+  }
+}
+
+/**
  * Resolve a ref for `git branch <new> <start>` without checking out the target.
  * Works when the target branch is already checked out in another worktree.
- * Prefers the latest origin/<name>, then local refs/heads/<name>.
+ *
+ * Prefers the LOCAL target branch (refs/heads/<name>) so the merge branch is based
+ * on the target you actually have checked out locally — matching `git checkout
+ * <target>` semantics. Falls back to origin/<name> only when no local branch exists.
+ *
+ * Freshness (fetch + behind/ahead detection) is handled upstream via
+ * getTargetSyncStatus, so this stays a pure ref lookup.
  */
 function resolveMergeBranchStartPoint(targetBranch: string): string {
   const remoteRef = `refs/remotes/origin/${targetBranch}`
   const localRef = `refs/heads/${targetBranch}`
   const remoteRefName = `origin/${targetBranch}`
 
-  refreshRemoteTargetBranch(targetBranch)
+  if (refExists(localRef)) {
+    return targetBranch
+  }
 
   if (refExists(remoteRef)) {
     return remoteRefName
-  }
-
-  if (refExists(localRef)) {
-    return targetBranch
   }
 
   return remoteRefName
@@ -493,7 +561,9 @@ export function createMergeBranch(targetBranch: string, mergeBranchName: string)
 
     if (refExists(mergeBranchRef)) {
       const startPoint = resolveMergeBranchStartPoint(targetBranch)
-      const sourceLabel = startPoint === targetBranch ? `${targetBranch} (local fallback)` : targetBranch
+      const fromLabel = startPoint === targetBranch
+        ? `local ${targetBranch}`
+        : `${startPoint} (origin fallback)`
 
       console.log(
         cyan(`\n🌿  Merge branch already exists locally, checking out: ${mergeBranchName}`),
@@ -504,9 +574,7 @@ export function createMergeBranch(targetBranch: string, mergeBranchName: string)
       })
 
       console.log(
-        cyan(
-          `🔄  Resetting existing merge branch to ${sourceLabel}${startPoint !== targetBranch ? ` (${startPoint})` : ''}`,
-        ),
+        cyan(`🔄  Resetting existing merge branch to ${fromLabel}`),
       )
 
       execSync(`git reset --hard ${startPoint}`, {
@@ -520,11 +588,11 @@ export function createMergeBranch(targetBranch: string, mergeBranchName: string)
     }
 
     const startPoint = resolveMergeBranchStartPoint(targetBranch)
-    const sourceLabel = startPoint === targetBranch ? `${targetBranch} (local fallback)` : targetBranch
+    const fromLabel = startPoint === targetBranch
+      ? `local ${targetBranch}`
+      : `${startPoint} (origin fallback)`
     console.log(
-      cyan(
-        `\n🌿  Creating merge branch: ${mergeBranchName} from ${sourceLabel}${startPoint !== targetBranch ? ` (${startPoint})` : ''}`,
-      ),
+      cyan(`\n🌿  Creating merge branch: ${mergeBranchName} from ${fromLabel}`),
     )
     execSync(`git branch ${mergeBranchName} ${startPoint}`, {
       stdio: 'inherit',

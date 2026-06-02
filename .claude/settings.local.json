@@ -4,7 +4,15 @@
       "Bash(npm run build:*)",
       "Bash(npm run lint)",
       "Bash(node:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(pnpm test *)",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm build *)",
+      "Bash(pnpm lint *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(git check-ignore *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ],
     "deny": [],
     "ask": []

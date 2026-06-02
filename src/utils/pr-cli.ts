@@ -310,6 +310,29 @@ export async function promptDeleteRemoteMergeBranches(): Promise<boolean> {
 }
 
 /**
+ * 当本地 target 落后于远程且可快进时，确认是否快进更新本地 target
+ */
+export async function promptPullTargetBranch(targetBranch: string, behind: number): Promise<boolean> {
+  console.log(
+    yellow(`\n⚠️  Local '${targetBranch}' is ${behind} commit(s) behind 'origin/${targetBranch}'.`),
+  )
+  console.log(
+    dim(`   The merge branch is based on your local '${targetBranch}'. Fast-forwarding keeps the conflict check aligned with the real PR base.`),
+  )
+
+  const { shouldPull } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'shouldPull',
+      message: `Fast-forward local '${targetBranch}' to 'origin/${targetBranch}' first?`,
+      default: true,
+    },
+  ])
+
+  return shouldPull
+}
+
+/**
  * 确认是否自动合并原始分支到合并分支
  */
 export async function promptAutoMergeSource(sourceBranch: string, targetBranch: string): Promise<boolean> {
