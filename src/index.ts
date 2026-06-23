@@ -11,6 +11,7 @@ import {
   createMergeBranch,
   createPullRequest,
   deleteMergeBranches,
+  extractWorkitemFromBranch,
   fastForwardLocalTarget,
   getAllBranches,
   getGitInfo,
@@ -334,7 +335,7 @@ async function promptPushBranch(branchName: string): Promise<boolean> {
  */
 async function handlePRCommand(
   targetBranchArg?: string,
-  options: { skip?: boolean } = {},
+  options: { skip?: boolean, workitem?: string | boolean } = {},
 ): Promise<void> {
   printPRBanner()
   const { skip = false } = options
@@ -413,11 +414,53 @@ async function handlePRCommand(
     return // 返回主菜单而不是退出
   }
 
+  // 飞书项目关联（仅在 --workitem 时触发）
+  let workitemId: string | undefined
+  const { workitem } = options
+
+  if (workitem !== undefined) {
+    if (typeof workitem === 'string' && workitem) {
+      // 用户直接传了 ID：qkpr pr -w 12345 或 -w M-12345，统一提取数字
+      const num = workitem.match(/\d+/)
+      workitemId = num ? num[0] : workitem
+      console.log(cyan(`\n🔗  Using workitem: M-${workitemId}`))
+    }
+    else {
+      // 仅传了 flag：qkpr pr -w，尝试从分支名提取
+      const extracted = extractWorkitemFromBranch(gitInfo.currentBranch)
+      if (extracted) {
+        workitemId = extracted
+        console.log(cyan(`\n🔗  Detected workitem from branch: M-${workitemId}`))
+      }
+      else {
+        // 提取失败，提示手动输入
+        console.log(dim('\n💡  No workitem ID detected from branch name.'))
+        const inquirer = (await import('inquirer')).default
+        const { input } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'input',
+            message: 'Enter workitem number, or press Enter to skip:',
+            validate: (value: string) => {
+              if (!value)
+                return true
+              return /^\d+$/.test(value) || 'Enter a number only'
+            },
+          },
+        ])
+        if (input) {
+          workitemId = input
+        }
+      }
+    }
+  }
+
   // 创建 PR
   const prInfo = createPullRequest(
     gitInfo.currentBranch,
     targetBranch,
     gitInfo.remoteUrl,
+    workitemId,
   )
   if (!prInfo) {
     console.log(red('❌  Failed to create PR information'))
@@ -540,9 +583,16 @@ const _argv = yargs(hideBin(process.argv))
           type: 'boolean',
           default: false,
         })
+        .option('workitem', {
+          alias: 'w',
+          describe: 'Feishu workitem number. Use -w to auto-extract from branch name',
+        })
     },
     async (argv) => {
-      await handlePRCommand(argv.branch as string | undefined, { skip: argv.skip as boolean | undefined })
+      await handlePRCommand(argv.branch as string | undefined, {
+        skip: argv.skip as boolean | undefined,
+        workitem: argv.workitem as string | boolean | undefined,
+      })
       await checkAndNotifyUpdate(packageName, version)
     },
   )

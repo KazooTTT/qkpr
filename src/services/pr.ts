@@ -403,12 +403,27 @@ export function getCommitsBetweenBranches(targetBranch: string, sourceBranch: st
 }
 
 /**
+ * 从分支名中提取飞书项目 workitem 数字
+ * 匹配 M-/F- 前缀 + 数字，返回纯数字，例如 feat/M-12345-fix → "12345"
+ */
+export function extractWorkitemFromBranch(branchName: string): string | null {
+  const match = branchName.match(/[MF]-(\d+)/i)
+  return match ? match[1] : null
+}
+
+/**
  * 生成 PR 描述信息
  */
-export function generatePRMessage(sourceBranch: string, targetBranch: string): string {
+export function generatePRMessage(sourceBranch: string, targetBranch: string, workitemId?: string): string {
   const commits = getCommitsBetweenBranches(targetBranch, sourceBranch)
 
-  let message = `### 🔧 PR: \`${sourceBranch}\` → \`${targetBranch}\`\n\n#### 📝 Commit Summary:\n`
+  let message = `### 🔧 PR: \`${sourceBranch}\` → \`${targetBranch}\`\n\n`
+
+  if (workitemId) {
+    message += `#### 🔗 飞书项目关联\nresolve M-${workitemId}\n\n`
+  }
+
+  message += `#### 📝 Commit Summary:\n`
 
   if (commits.length === 0) {
     message += '\n（无差异提交）'
@@ -742,7 +757,7 @@ export function copyToClipboard(text: string): boolean {
 /**
  * 创建完整的 PR
  */
-export function createPullRequest(sourceBranch: string, targetBranch: string, remoteUrl: string): PRInfo | null {
+export function createPullRequest(sourceBranch: string, targetBranch: string, remoteUrl: string, workitemId?: string): PRInfo | null {
   const parsed = parseRemoteUrl(remoteUrl)
   if (!parsed) {
     console.log(red('❌  无法解析 remote URL'))
@@ -758,7 +773,7 @@ export function createPullRequest(sourceBranch: string, targetBranch: string, re
     sourceBranch,
     targetBranch,
   )
-  const prMessage = generatePRMessage(sourceBranch, targetBranch)
+  const prMessage = generatePRMessage(sourceBranch, targetBranch, workitemId)
   const mergeBranchName = generateMergeBranchName(sourceBranch, targetBranch)
 
   return {
