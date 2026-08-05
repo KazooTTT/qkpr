@@ -43,6 +43,12 @@ qkpr pr
 # Specify target branch directly
 qkpr pr main
 qkpr pr develop
+
+# Specify both source and target branches
+qkpr pr feature/source main
+
+# Search and select source, then target
+qkpr pr -s
 ```
 
 **Features:**

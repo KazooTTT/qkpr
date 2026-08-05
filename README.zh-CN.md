@@ -48,6 +48,12 @@ CLI 将显示一个交互式菜单，你可以从中选择所有可用的功能�
 
 ```bash
 qkpr pr
+# 指定目标分支（当前分支 → main）
+qkpr pr main
+# 同时指定源分支和目标分支（A → B）
+qkpr pr feature/A release/B
+# 先搜索选择源分支，再搜索选择目标分支
+qkpr pr -s
 ```
 
 CLI 将通过交互方式指导你创建 Pull Request：
@@ -189,7 +195,7 @@ qkpr
 qkpr pr
 ```
 
-通过交互式分支选择直接创建 Pull Request
+通过交互式分支选择直接创建 Pull Request，也支持显式指定 `qkpr pr [source] [target]`，或使用 `qkpr pr -s` 先后搜索选择源分支和目标分支。
 
 ### 生成提交消息
 

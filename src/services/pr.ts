@@ -30,6 +30,29 @@ export interface DeleteBranchesResult {
   remoteFailed: string[]
 }
 
+export interface PRBranches {
+  sourceBranch: string
+  targetBranch?: string
+}
+
+/**
+ * Resolve PR positional arguments while preserving the original one-argument
+ * form: `qkpr pr B` means current -> B, while `qkpr pr A B` means A -> B.
+ */
+export function resolvePRBranches(currentBranch: string, firstBranch?: string, secondBranch?: string): PRBranches {
+  if (secondBranch) {
+    return {
+      sourceBranch: firstBranch || currentBranch,
+      targetBranch: secondBranch,
+    }
+  }
+
+  return {
+    sourceBranch: currentBranch,
+    targetBranch: firstBranch,
+  }
+}
+
 /**
  * 获取当前 Git 仓库信息
  */

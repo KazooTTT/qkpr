@@ -258,6 +258,29 @@ export async function promptTargetBranch(branches: string[], currentBranch: stri
 }
 
 /**
+ * 提示选择源分支
+ */
+export async function promptSourceBranch(branches: string[], currentBranch: string): Promise<string | null> {
+  const sourceBranch = await promptBranchSelection(branches, {
+    title: '🚀  Source Branch Selection',
+    message: 'Select source branch (type to search):',
+    mode: 'single',
+  }) as string
+
+  if (sourceBranch === '__CANCEL__') {
+    console.log(yellow('\n🚫 PR creation cancelled.'))
+    return null
+  }
+
+  if (!sourceBranch) {
+    return currentBranch
+  }
+
+  console.log(green(`✅  Selected source branch: ${sourceBranch}\n`))
+  return sourceBranch
+}
+
+/**
  * 确认是否创建合并分支
  */
 export async function promptCreateMergeBranch(mergeBranchName: string): Promise<boolean> {

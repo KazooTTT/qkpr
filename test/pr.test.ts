@@ -1,13 +1,36 @@
 import { execSync } from 'node:child_process'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createMergeBranch, deleteMergeBranches, fastForwardLocalTarget, getMergeBranches, getTargetSyncStatus, isMergeBranchName } from '../src/services/pr'
+import { createMergeBranch, deleteMergeBranches, fastForwardLocalTarget, getMergeBranches, getTargetSyncStatus, isMergeBranchName, resolvePRBranches } from '../src/services/pr'
 
 vi.mock('node:child_process', () => ({
   execSync: vi.fn(),
 }))
 
 const execSyncMock = vi.mocked(execSync)
+
+describe('resolvePRBranches', () => {
+  it('uses the current branch as source when only a target is provided', () => {
+    expect(resolvePRBranches('feature/current', 'main')).toEqual({
+      sourceBranch: 'feature/current',
+      targetBranch: 'main',
+    })
+  })
+
+  it('supports an explicit source and target', () => {
+    expect(resolvePRBranches('feature/current', 'feature/A', 'release/B')).toEqual({
+      sourceBranch: 'feature/A',
+      targetBranch: 'release/B',
+    })
+  })
+
+  it('keeps interactive target selection when no arguments are provided', () => {
+    expect(resolvePRBranches('feature/current')).toEqual({
+      sourceBranch: 'feature/current',
+      targetBranch: undefined,
+    })
+  })
+})
 
 describe('createMergeBranch', () => {
   beforeEach(() => {

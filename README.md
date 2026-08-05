@@ -82,6 +82,10 @@ You can directly access the PR creation feature:
 qkpr pr
 # or specify the target branch directly
 qkpr pr main
+# or specify both source and target branches
+qkpr pr feature/source main
+# or search and select both branches interactively
+qkpr pr -s
 ```
 
 The CLI will interactively guide you through creating a pull request:
@@ -226,7 +230,9 @@ qkpr pr
 Directly create a pull request with interactive branch selection. You can also specify the target branch directly:
 
 ```bash
-qkpr pr [branch]
+qkpr pr [target]
+qkpr pr [source] [target]
+qkpr pr -s
 ```
 
 ### Generate Commit Message

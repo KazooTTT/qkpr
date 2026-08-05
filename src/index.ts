@@ -19,6 +19,7 @@ import {
   getTargetSyncStatus,
   isMergeBranchName,
   mergeSourceToMergeBranch,
+  resolvePRBranches,
 } from './services/pr.js'
 import { handleBranchCommand, handleCommitCommand, handleConfigCommand, handleConfigModelCommand, handleConfigPromptLangCommand, handleConfigPromptsCommand, isBranchPushed, pushBranchToRemote } from './utils/commit-cli.js'
 import { handleListPinnedCommand, handlePinCommand, handleUnpinCommand } from './utils/pin-cli.js'
@@ -29,6 +30,7 @@ import {
   promptDeleteMergeBranches,
   promptDeleteRemoteMergeBranches,
   promptPullTargetBranch,
+  promptSourceBranch,
   promptTargetBranch,
 } from './utils/pr-cli.js'
 import { checkAndNotifyUpdate } from './utils/version-check.js'
@@ -334,11 +336,12 @@ async function promptPushBranch(branchName: string): Promise<boolean> {
  * 处理 PR 命令
  */
 async function handlePRCommand(
-  targetBranchArg?: string,
-  options: { skip?: boolean, workitem?: string | boolean } = {},
+  firstBranchArg?: string,
+  secondBranchArg?: string,
+  options: { source?: boolean, skip?: boolean, workitem?: string | boolean } = {},
 ): Promise<void> {
   printPRBanner()
-  const { skip = false } = options
+  const { source = false, skip = false } = options
 
   // 检查是否在 Git 仓库中
   const gitInfo = getGitInfo()
@@ -352,21 +355,48 @@ async function handlePRCommand(
   console.log(dim(`  Branch: ${gitInfo.currentBranch}`))
   console.log(dim(`  Remote: ${gitInfo.remoteUrl}\n`))
 
-  // 检查当前分支是否已推送到远程
-  if (!isBranchPushed(gitInfo.currentBranch)) {
-    console.log(yellow(`⚠️  Current branch '${gitInfo.currentBranch}' is not pushed to remote.`))
+  let { sourceBranch, targetBranch: targetBranchArg } = resolvePRBranches(
+    gitInfo.currentBranch,
+    firstBranchArg,
+    secondBranchArg,
+  )
+
+  const branches = getAllBranches()
+  if (branches.length === 0) {
+    console.log(yellow('⚠️  No branches found.'))
+    return // 返回主菜单而不是退出
+  }
+
+  if (source) {
+    const selectedSource = await promptSourceBranch(branches, gitInfo.currentBranch)
+    if (!selectedSource) {
+      return
+    }
+    sourceBranch = selectedSource
+  }
+
+  if (!branches.includes(sourceBranch)) {
+    console.log(red(`❌  Source branch '${sourceBranch}' not found.`))
+    return
+  }
+
+  console.log(cyan(`🔀  PR source branch: ${sourceBranch}\n`))
+
+  // 检查 source 分支是否已推送到远程
+  if (!isBranchPushed(sourceBranch)) {
+    console.log(yellow(`⚠️  Source branch '${sourceBranch}' is not pushed to remote.`))
     if (skip) {
-      const pushSuccess = pushBranchToRemote(gitInfo.currentBranch)
+      const pushSuccess = pushBranchToRemote(sourceBranch)
       if (!pushSuccess) {
         console.log(red('❌  Cannot create PR without pushing branch to remote.'))
         return // 返回主菜单而不是退出
       }
     }
     else {
-      const shouldPush = await promptPushBranch(gitInfo.currentBranch)
+      const shouldPush = await promptPushBranch(sourceBranch)
 
       if (shouldPush) {
-        const pushSuccess = pushBranchToRemote(gitInfo.currentBranch)
+        const pushSuccess = pushBranchToRemote(sourceBranch)
         if (!pushSuccess) {
           console.log(red('❌  Cannot create PR without pushing branch to remote.'))
           return // 返回主菜单而不是退出
@@ -378,13 +408,6 @@ async function handlePRCommand(
         return // 返回主菜单而不是退出
       }
     }
-  }
-
-  // 获取所有分支
-  const branches = getAllBranches()
-  if (branches.length === 0) {
-    console.log(yellow('⚠️  No branches found.'))
-    return // 返回主菜单而不是退出
   }
 
   // 选择目标分支
@@ -406,12 +429,17 @@ async function handlePRCommand(
   if (!targetBranch) {
     targetBranch = await promptTargetBranch(
       branches,
-      gitInfo.currentBranch,
+      sourceBranch,
     )
   }
 
   if (!targetBranch) {
     return // 返回主菜单而不是退出
+  }
+
+  if (targetBranch === sourceBranch) {
+    console.log(red(`❌  Source and target branch cannot both be '${sourceBranch}'.`))
+    return
   }
 
   // 飞书项目关联（仅在 --workitem 时触发）
@@ -427,7 +455,7 @@ async function handlePRCommand(
     }
     else {
       // 仅传了 flag：qkpr pr -w，尝试从分支名提取
-      const extracted = extractWorkitemFromBranch(gitInfo.currentBranch)
+      const extracted = extractWorkitemFromBranch(sourceBranch)
       if (extracted) {
         workitemId = extracted
         console.log(cyan(`\n🔗  Detected workitem from branch: M-${workitemId}`))
@@ -457,7 +485,7 @@ async function handlePRCommand(
 
   // 创建 PR
   const prInfo = createPullRequest(
-    gitInfo.currentBranch,
+    sourceBranch,
     targetBranch,
     gitInfo.remoteUrl,
     workitemId,
@@ -526,14 +554,14 @@ async function handlePRCommand(
 
     // 询问是否要自动合并以检测冲突
     const shouldAutoMerge = await promptAutoMergeSource(
-      gitInfo.currentBranch,
+      sourceBranch,
       targetBranch,
     )
 
     if (shouldAutoMerge) {
-      console.log(yellow(`\n🔄  Merging '${gitInfo.currentBranch}' to detect conflicts...`))
+      console.log(yellow(`\n🔄  Merging '${sourceBranch}' to detect conflicts...`))
       try {
-        const mergeSuccess = mergeSourceToMergeBranch(gitInfo.currentBranch)
+        const mergeSuccess = mergeSourceToMergeBranch(sourceBranch)
         if (!mergeSuccess) {
           console.log(yellow('\n⚠️  Merge conflicts detected! Please resolve them manually:'))
           console.log(dim(`   1. Resolve conflicts in your editor`))
@@ -551,7 +579,7 @@ async function handlePRCommand(
       console.log(green(`\n✅  Merge branch '${prInfo.mergeBranchName}' created without merging.`))
       console.log(dim(`   You can manually merge later when ready:`))
       console.log(dim(`   git checkout ${prInfo.mergeBranchName}`))
-      console.log(dim(`   git merge ${gitInfo.currentBranch}`))
+      console.log(dim(`   git merge ${sourceBranch}`))
     }
   }
 
@@ -570,16 +598,26 @@ const _argv = yargs(hideBin(process.argv))
     },
   )
   .command(
-    'pr [branch]',
+    'pr [branch] [target]',
     '🔧  Create a Pull Request with interactive branch selection',
     (yargs) => {
       return yargs
         .positional('branch', {
-          describe: 'Target branch name',
+          describe: 'Target branch, or source branch when target is also provided',
+          type: 'string',
+        })
+        .positional('target', {
+          describe: 'Target branch when explicitly specifying source and target',
           type: 'string',
         })
         .option('skip', {
           describe: 'Skip creating merge branch / conflict checks (open PR link only)',
+          type: 'boolean',
+          default: false,
+        })
+        .option('source', {
+          alias: 's',
+          describe: 'Interactively search and select the source branch',
           type: 'boolean',
           default: false,
         })
@@ -589,7 +627,8 @@ const _argv = yargs(hideBin(process.argv))
         })
     },
     async (argv) => {
-      await handlePRCommand(argv.branch as string | undefined, {
+      await handlePRCommand(argv.branch as string | undefined, argv.target as string | undefined, {
+        source: argv.source as boolean | undefined,
         skip: argv.skip as boolean | undefined,
         workitem: argv.workitem as string | boolean | undefined,
       })
