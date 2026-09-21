@@ -71,8 +71,10 @@ The CLI will show an interactive menu where you can choose from all available fe
 - 🔧 Create Pull Request
 - 🤖 Generate Commit Message
 - 🌿 Generate Branch Name
-- ⚙️  Configure API Key
-- 🔧 Configure Model
+- 🗑️ Delete Merge Branches
+- 🔙 Back to Source Branch
+- 📌 Manage Pinned Branches
+- ⚙️  Settings
 
 ### Create Pull Request
 
@@ -250,6 +252,30 @@ qkpr branch
 ```
 
 Directly generate a semantic branch name based on your staged changes using AI (requires Gemini API key)
+
+### Delete Merge Branches
+
+```bash
+qkpr del [branch]
+qkpr del [branch] --remote
+```
+
+Delete merge branches locally. Use `--remote` or `-r` to also delete the corresponding remote branches on origin.
+
+### Back to Source Branch
+
+```bash
+qkpr back
+```
+
+Switch back to the source branch from a merge branch. This command:
+
+- Automatically detects the current merge branch (e.g., `merge/feat-xxx-to-main`)
+- Parses the original source and target branches from the branch name
+- If multiple matching branches are found, prompts you to select the correct one
+- Switches to the source branch
+
+Useful when you've finished working on a merge branch and want to return to your feature branch.
 
 ### Configuration
 

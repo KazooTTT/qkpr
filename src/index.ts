@@ -19,6 +19,7 @@ import {
   getTargetSyncStatus,
   isMergeBranchName,
   mergeSourceToMergeBranch,
+  parseMergeBranchNameCandidates,
   resolvePRBranches,
 } from './services/pr.js'
 import { handleBranchCommand, handleCommitCommand, handleConfigCommand, handleConfigModelCommand, handleConfigPromptLangCommand, handleConfigPromptsCommand, isBranchPushed, pushBranchToRemote } from './utils/commit-cli.js'
@@ -189,6 +190,145 @@ async function handleDeleteMergeBranchCommand(branchArg?: string, options: { rem
   console.log('')
 }
 
+/**
+ * 从 merge 分支切换回原始 source 分支
+ */
+async function handleBackCommand(): Promise<void> {
+  const gitInfo = getGitInfo()
+  if (!gitInfo.isGitRepo) {
+    console.log(red('❌  Not a Git repository'))
+    console.log(dim('Please run this command in a Git repository.\n'))
+    return
+  }
+
+  const { currentBranch } = gitInfo
+
+  // 检查是否在 merge 分支上
+  if (!isMergeBranchName(currentBranch)) {
+    console.log(yellow(`⚠️  Not on a merge branch (current: ${currentBranch})`))
+    console.log(dim('This command switches back to the source branch from a merge branch.\n'))
+    return
+  }
+
+  // 解析所有可能的分支组合
+  const candidates = parseMergeBranchNameCandidates(currentBranch)
+
+  console.log(cyan('\n🔙  Back to Source Branch'))
+  console.log(dim(`  Merge branch: ${currentBranch}\n`))
+
+  let sourceBranch: string
+  let targetBranch: string
+
+  if (candidates.length === 0) {
+    // 解析失败，让用户选择
+    console.log(red(`❌  Could not parse merge branch name: ${currentBranch}`))
+    console.log(dim('Expected format: merge/<source>-to-<target>\n'))
+
+    const branches = getAllBranches()
+    const selectedSource = await promptSourceBranch(branches, currentBranch)
+    if (!selectedSource) {
+      return
+    }
+    sourceBranch = selectedSource
+
+    const selectedTarget = await promptTargetBranch(branches, currentBranch)
+    if (!selectedTarget) {
+      return
+    }
+    targetBranch = selectedTarget
+  }
+  else if (candidates.length === 1) {
+    // 只有一个匹配，直接使用
+    sourceBranch = candidates[0].sourceBranch
+    targetBranch = candidates[0].targetBranch
+    console.log(dim(`  Detected source: ${sourceBranch}`))
+    console.log(dim(`  Detected target: ${targetBranch}\n`))
+  }
+  else {
+    // 多个匹配，让用户选择
+    console.log(yellow(`⚠️  Found ${candidates.length} possible branch combinations:\n`))
+
+    const inquirer = (await import('inquirer')).default
+    const { selected } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'selected',
+        message: 'Which source branch do you want to switch to?',
+        choices: [
+          ...candidates.map((c, i) => ({
+            name: `${c.sourceBranch} → ${c.targetBranch}`,
+            value: i,
+          })),
+          new inquirer.Separator(),
+          { name: 'Cancel', value: -1 },
+        ],
+      },
+    ])
+
+    if (selected === -1) {
+      return
+    }
+
+    sourceBranch = candidates[selected].sourceBranch
+    targetBranch = candidates[selected].targetBranch
+  }
+
+  const branches = getAllBranches()
+
+  // 检查分支是否存在
+  if (!branches.includes(sourceBranch)) {
+    console.log(yellow(`⚠️  Source branch '${sourceBranch}' not found.`))
+    const selected = await promptSourceBranch(branches, currentBranch)
+    if (!selected) {
+      return
+    }
+    sourceBranch = selected
+  }
+
+  // 检查本地是否有 source 分支
+  const localBranches = branches.filter(b => !b.startsWith('origin/'))
+  if (!localBranches.includes(sourceBranch)) {
+    console.log(yellow(`⚠️  Source branch '${sourceBranch}' is not available locally.`))
+    const inquirer = (await import('inquirer')).default
+    const { action } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'action',
+        message: 'What would you like to do?',
+        choices: [
+          { name: `Checkout from remote (origin/${sourceBranch})`, value: 'checkout-remote' },
+          { name: 'Select a different branch', value: 'select' },
+          { name: 'Cancel', value: 'cancel' },
+        ],
+      },
+    ])
+
+    if (action === 'cancel') {
+      return
+    }
+    if (action === 'select') {
+      const selected = await promptSourceBranch(branches, currentBranch)
+      if (!selected) {
+        return
+      }
+      sourceBranch = selected
+    }
+  }
+
+  // 切换分支
+  try {
+    console.log(cyan(`\n🔄  Switching to source branch: ${sourceBranch}`))
+    const { execSync } = await import('node:child_process')
+    execSync(`git checkout ${sourceBranch}`, { stdio: 'inherit' })
+    console.log(green(`\n✅  Switched back to: ${sourceBranch}`))
+    console.log(dim(`   (from merge branch: ${currentBranch})\n`))
+  }
+  catch {
+    console.log(red('❌  Failed to switch branch'))
+    console.log(dim('You may have uncommitted changes. Please commit or stash them first.\n'))
+  }
+}
+
 async function showMainMenu(): Promise<void> {
   // Check for updates at the start of main menu
   await checkAndNotifyUpdate(packageName, version)
@@ -247,8 +387,9 @@ async function showMainMenu(): Promise<void> {
         { name: '2. 🤖  Generate Commit Message', value: 'commit', key: '2' },
         { name: '3. 🌿  Generate Branch Name', value: 'branch', key: '3' },
         { name: '4. 🗑️  Delete Merge Branches', value: 'del', key: '4' },
-        { name: '5. 📌  Manage Pinned Branches', value: 'pinned', key: '5' },
-        { name: '6. ⚙️   Settings', value: 'settings', key: '6' },
+        { name: '5. 🔙  Back to Source Branch', value: 'back', key: '5' },
+        { name: '6. 📌  Manage Pinned Branches', value: 'pinned', key: '6' },
+        { name: '7. ⚙️   Settings', value: 'settings', key: '7' },
         new inquirer.Separator(),
         { name: '❌  Exit', value: 'exit' },
       ],
@@ -270,6 +411,10 @@ async function showMainMenu(): Promise<void> {
       break
     case 'del':
       await handleDeleteMergeBranchCommand()
+      await showMainMenu()
+      break
+    case 'back':
+      await handleBackCommand()
       await showMainMenu()
       break
     case 'pinned':
@@ -673,6 +818,15 @@ const _argv = yargs(hideBin(process.argv))
       await handleDeleteMergeBranchCommand(argv.branch as string | undefined, {
         remote: argv.remote as boolean | undefined,
       })
+      await checkAndNotifyUpdate(packageName, version)
+    },
+  )
+  .command(
+    'back',
+    '🔙  Switch back to source branch from a merge branch',
+    () => {},
+    async () => {
+      await handleBackCommand()
       await checkAndNotifyUpdate(packageName, version)
     },
   )

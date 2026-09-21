@@ -468,6 +468,85 @@ export function generateMergeBranchName(sourceBranch: string, targetBranch: stri
 }
 
 /**
+ * 从 merge 分支名称解析所有可能的原始分支组合
+ * 返回所有匹配的 source/target 组合，让用户选择
+ */
+export function parseMergeBranchNameCandidates(mergeBranchName: string): Array<{ sourceBranch: string, targetBranch: string }> {
+  if (!mergeBranchName.startsWith('merge/')) {
+    return []
+  }
+
+  const content = mergeBranchName.slice(6) // remove 'merge/'
+  const allBranches = getAllBranches()
+
+  // 找到所有 '-to-' 的位置
+  const toPositions: number[] = []
+  let searchFrom = 0
+  while (true) {
+    const idx = content.indexOf('-to-', searchFrom)
+    if (idx === -1)
+      break
+    toPositions.push(idx)
+    searchFrom = idx + 1
+  }
+
+  if (toPositions.length === 0) {
+    return []
+  }
+
+  const candidates: Array<{ sourceBranch: string, targetBranch: string }> = []
+
+  // 尝试在每个 '-to-' 位置拆分
+  for (let i = toPositions.length - 1; i >= 0; i--) {
+    const pos = toPositions[i]
+    const sourceSanitized = content.slice(0, pos)
+    const targetSanitized = content.slice(pos + 4)
+
+    // 查找所有匹配的 source 分支
+    const sourceMatches = allBranches.filter((b) => {
+      return b.replace(/\//g, '-') === sourceSanitized
+    })
+
+    // 查找所有匹配的 target 分支
+    const targetMatches = allBranches.filter((b) => {
+      return b.replace(/\//g, '-') === targetSanitized
+    })
+
+    // 生成所有可能的组合
+    for (const source of sourceMatches) {
+      for (const target of targetMatches) {
+        candidates.push({
+          sourceBranch: source,
+          targetBranch: target,
+        })
+      }
+    }
+  }
+
+  return candidates
+}
+
+/**
+ * 从 merge 分支名称解析原始 source/target 分支（返回最佳匹配）
+ * 通过匹配分支的 sanitize 版本反推原始分支名
+ */
+export function parseMergeBranchName(mergeBranchName: string): { sourceBranch: string, targetBranch: string } | null {
+  const candidates = parseMergeBranchNameCandidates(mergeBranchName)
+
+  if (candidates.length === 0) {
+    return null
+  }
+
+  // 优先返回包含 '/' 的分支（更常见的格式）
+  const withSlash = candidates.find(c => c.sourceBranch.includes('/') || c.targetBranch.includes('/'))
+  if (withSlash) {
+    return withSlash
+  }
+
+  return candidates[0]
+}
+
+/**
  * 检查 ref 是否存在
  */
 function refExists(ref: string): boolean {
