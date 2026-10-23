@@ -138,7 +138,7 @@ export function updatePackage(packageName: string): void {
   const packageManager = detectPackageManager()
   const target = `${packageName}@latest`
   const args = packageManager === 'npm'
-    ? ['install', '-g', target]
+    ? ['install', '-g', target, '--registry=https://registry.npmjs.org']
     : packageManager === 'yarn'
       ? ['global', 'add', target]
       : ['add', '-g', target]

@@ -234,6 +234,8 @@ qkpr update
 
 自动检测全局安装所用的包管理器（npm、pnpm、yarn 或 bun，默认 npm），安装 `qkpr@latest`。无需再次确认，安装失败时返回非零退出码。
 
+使用 npm 更新时临时使用官方源，避免镜像同步延迟，不修改现有 registry 配置。
+
 ### 清理项目
 
 ```bash

@@ -15,7 +15,7 @@ afterEach(() => {
 })
 
 it.each([
-  ['npm', ['install', '-g', 'qkpr@latest']],
+  ['npm', ['install', '-g', 'qkpr@latest', '--registry=https://registry.npmjs.org']],
   ['pnpm', ['add', '-g', 'qkpr@latest']],
   ['yarn', ['global', 'add', 'qkpr@latest']],
   ['bun', ['add', '-g', 'qkpr@latest']],
@@ -34,7 +34,7 @@ it('falls back to npm when no manager is detected', () => {
     throw new Error('missing')
   })
   updatePackage('qkpr')
-  expect(execFileSync).toHaveBeenCalledWith('npm', ['install', '-g', 'qkpr@latest'], { stdio: 'inherit' })
+  expect(execFileSync).toHaveBeenCalledWith('npm', ['install', '-g', 'qkpr@latest', '--registry=https://registry.npmjs.org'], { stdio: 'inherit' })
 })
 
 it('returns a failure status when installation fails', () => {

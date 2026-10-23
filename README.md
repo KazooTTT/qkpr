@@ -272,6 +272,8 @@ qkpr update
 
 Installs `qkpr@latest` globally using the detected package manager (npm, pnpm, yarn, or bun; defaults to npm). Runs without a confirmation prompt and exits with a nonzero status if installation fails.
 
+When using npm, updates use the official npm registry to avoid mirror synchronization delays; your registry configuration is preserved.
+
 ### Clean Repository
 
 ```bash
