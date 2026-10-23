@@ -259,15 +259,27 @@ describe('merge branch cleanup', () => {
     expect(isMergeBranchName('feature/foo')).toBe(false)
   })
 
-  it('filters merge branches and excludes the current branch', () => {
-    execSyncMock.mockReturnValue(`
-  feature/foo
-* merge/current-to-main
-  merge/feature-to-main
-  remotes/origin/main
-`)
+  it('loads only local merge refs and excludes the current branch', () => {
+    execSyncMock.mockImplementation((command: string) => {
+      if (command === 'git for-each-ref --format="%(refname:short)" refs/heads/merge/')
+        return 'merge/current-to-main\nmerge/feature-to-main\n'
+      throw new Error(`Unexpected command: ${command}`)
+    })
 
     expect(getMergeBranches('merge/current-to-main')).toEqual(['merge/feature-to-main'])
+    expect(execSyncMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns no candidates when only remote merge branches exist', () => {
+    execSyncMock.mockImplementation((command: string) => {
+      if (command === 'git for-each-ref --format="%(refname:short)" refs/heads/merge/')
+        return ''
+      if (command === 'git branch -a')
+        return '  remotes/origin/merge/remote-only\n'
+      throw new Error(`Unexpected command: ${command}`)
+    })
+
+    expect(getMergeBranches()).toEqual([])
   })
 
   it('deletes only merge branches and reports failures for others', () => {

@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import { execFileSync, execSync } from 'node:child_process'
 import inquirer from 'inquirer'
 import { cyan, dim, green, red, yellow } from 'kolorist'
 
@@ -133,6 +133,33 @@ function detectPackageManager(): string {
   return 'npm'
 }
 
+/** Install the latest release using the existing global package manager. */
+export function updatePackage(packageName: string): void {
+  const packageManager = detectPackageManager()
+  const target = `${packageName}@latest`
+  const args = packageManager === 'npm'
+    ? ['install', '-g', target]
+    : packageManager === 'yarn'
+      ? ['global', 'add', target]
+      : ['add', '-g', target]
+
+  console.log(cyan(`\n⏳  Updating ${packageName} using ${packageManager}...\n`))
+  execFileSync(packageManager, args, { stdio: 'inherit' })
+}
+
+/** Explicit updates surface installation failures and work without a prompt. */
+export function handleUpdateCommand(packageName: string): void {
+  try {
+    updatePackage(packageName)
+    console.log(green(`\n✅  Updated ${packageName} to the latest release.`))
+    console.log(dim(`Run ${packageName} --version to check the installed version.\n`))
+  }
+  catch (error) {
+    console.error(red(`\n❌  Failed to update: ${error instanceof Error ? error.message : String(error)}`))
+    process.exitCode = 1
+  }
+}
+
 /**
  * Display update notification and prompt user to update
  */
@@ -160,27 +187,7 @@ export async function promptForUpdate(
 
   if (shouldUpdate) {
     try {
-      const packageManager = detectPackageManager()
-      console.log(cyan(`\n⏳  Updating ${packageName} using ${packageManager}...\n`))
-
-      let command: string
-      if (packageManager === 'npm') {
-        command = `npm install -g ${packageName}`
-      }
-      else if (packageManager === 'pnpm') {
-        command = `pnpm add -g ${packageName}`
-      }
-      else if (packageManager === 'yarn') {
-        command = `yarn global add ${packageName}`
-      }
-      else if (packageManager === 'bun') {
-        command = `bun add -g ${packageName}`
-      }
-      else {
-        command = `npm install -g ${packageName}`
-      }
-
-      execSync(command, { stdio: 'inherit' })
+      updatePackage(packageName)
       console.log(green(`\n✅  Successfully updated to version ${result.latestVersion}!`))
       console.log(yellow('Please restart the command to use the new version.\n'))
       process.exit(0)

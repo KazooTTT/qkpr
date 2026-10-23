@@ -264,6 +264,14 @@ Delete merge branches locally. Use `--remote` or `-r` to also delete the corresp
 
 In the deletion list, press `a` to select/deselect all `merge/` branches, Space to toggle one, and Enter to confirm. The current branch is excluded.
 
+### Update qkpr
+
+```bash
+qkpr update
+```
+
+Installs `qkpr@latest` globally using the detected package manager (npm, pnpm, yarn, or bun; defaults to npm). Runs without a confirmation prompt and exits with a nonzero status if installation fails.
+
 ### Clean Repository
 
 ```bash

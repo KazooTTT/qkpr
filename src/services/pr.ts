@@ -116,9 +116,19 @@ export function isMergeBranchName(branchName: string): boolean {
  * 获取所有 merge/ 开头的本地分支
  */
 export function getMergeBranches(currentBranch?: string): string[] {
-  return getAllBranches()
-    .filter(isMergeBranchName)
-    .filter(branch => branch !== currentBranch)
+  try {
+    const branches = execSync('git for-each-ref --format="%(refname:short)" refs/heads/merge/', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'ignore'],
+    })
+    return branches.split('\n')
+      .filter(isMergeBranchName)
+      .filter(branch => branch !== currentBranch)
+      .sort()
+  }
+  catch {
+    return []
+  }
 }
 
 /**

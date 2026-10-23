@@ -226,6 +226,14 @@ qkpr del [branch] --remote
 
 删除列表中按 `a` 全选／取消全选所有 `merge/` 分支，空格切换单项，回车确认。当前分支不在候选列表中。
 
+### 更新 qkpr
+
+```bash
+qkpr update
+```
+
+自动检测全局安装所用的包管理器（npm、pnpm、yarn 或 bun，默认 npm），安装 `qkpr@latest`。无需再次确认，安装失败时返回非零退出码。
+
 ### 清理项目
 
 ```bash

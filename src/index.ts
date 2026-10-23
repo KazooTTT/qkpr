@@ -35,7 +35,7 @@ import {
   promptSourceBranch,
   promptTargetBranch,
 } from './utils/pr-cli.js'
-import { checkAndNotifyUpdate } from './utils/version-check.js'
+import { checkAndNotifyUpdate, handleUpdateCommand } from './utils/version-check.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -797,6 +797,12 @@ const _argv = yargs(hideBin(process.argv))
       })
       await checkAndNotifyUpdate(packageName, version)
     },
+  )
+  .command(
+    'update',
+    '📦  Update qkpr to the latest release',
+    () => {},
+    () => handleUpdateCommand(packageName),
   )
   .command(
     'clean',
