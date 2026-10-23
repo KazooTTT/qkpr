@@ -302,11 +302,16 @@ export async function promptCreateMergeBranch(mergeBranchName: string): Promise<
  * 提示选择要删除的 merge 分支
  */
 export async function promptDeleteMergeBranches(branches: string[]): Promise<string[]> {
-  const selectedBranches = await promptBranchSelection(branches, {
-    title: '🗑️  Merge Branch Cleanup',
-    message: 'Select merge branches to delete:',
-    mode: 'multiple',
-  }) as string[]
+  console.log(cyan('\n🗑️  Merge Branch Cleanup'))
+  const { selectedBranches } = await inquirer.prompt<{ selectedBranches: string[] }>([
+    {
+      type: 'checkbox',
+      name: 'selectedBranches',
+      message: 'Select merge branches to delete (a: toggle all, space: toggle one):',
+      choices: branches.map(branch => ({ name: branch, value: branch })),
+      pageSize: 20,
+    },
+  ])
 
   const validBranches = selectedBranches.filter(branch => branch !== '__CANCEL__')
   if (validBranches.length === 0) {

@@ -262,6 +262,16 @@ qkpr del [branch] --remote
 
 Delete merge branches locally. Use `--remote` or `-r` to also delete the corresponding remote branches on origin.
 
+In the deletion list, press `a` to select/deselect all `merge/` branches, Space to toggle one, and Enter to confirm. The current branch is excluded.
+
+### Clean Repository
+
+```bash
+qkpr clean
+```
+
+Runs `git fetch --all --prune --tags --no-prune-tags` in the current repository. Fetches remote branches and tags and removes stale remote-tracking refs. Preserves local branches, working files, and local-only tags; does not force-update conflicting tags. Tag pruning is explicitly disabled even when enabled in Git configuration. Custom fetch refspecs still determine which refs Git prunes.
+
 ### Back to Source Branch
 
 ```bash

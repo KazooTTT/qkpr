@@ -6,6 +6,7 @@ import { bold, cyan, dim, green, red, yellow } from 'kolorist'
 import open from 'open'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
+import { cleanRepository } from './services/clean.js'
 import {
   copyToClipboard,
   createMergeBranch,
@@ -118,6 +119,18 @@ async function showSettingsMenu(): Promise<void> {
       case 'back':
         return
     }
+  }
+}
+
+async function handleCleanCommand(): Promise<void> {
+  console.log(cyan('\n🧹  Fetching all remotes, pruning stale remote refs, and fetching tags...'))
+  try {
+    cleanRepository()
+    console.log(green('✅  Repository refreshed.\n'))
+  }
+  catch (error) {
+    console.error(red(`❌  Repository cleanup failed: ${error instanceof Error ? error.message : String(error)}`))
+    process.exitCode = 1
   }
 }
 
@@ -390,6 +403,7 @@ async function showMainMenu(): Promise<void> {
         { name: '5. 🔙  Back to Source Branch', value: 'back', key: '5' },
         { name: '6. 📌  Manage Pinned Branches', value: 'pinned', key: '6' },
         { name: '7. ⚙️   Settings', value: 'settings', key: '7' },
+        { name: '8. 🧹  Clean Repository', value: 'clean', key: '8' },
         new inquirer.Separator(),
         { name: '❌  Exit', value: 'exit' },
       ],
@@ -408,6 +422,10 @@ async function showMainMenu(): Promise<void> {
     case 'branch':
       await handleBranchCommand()
       await showMainMenu() // 回到首页
+      break
+    case 'clean':
+      await handleCleanCommand()
+      await showMainMenu()
       break
     case 'del':
       await handleDeleteMergeBranchCommand()
@@ -779,6 +797,12 @@ const _argv = yargs(hideBin(process.argv))
       })
       await checkAndNotifyUpdate(packageName, version)
     },
+  )
+  .command(
+    'clean',
+    '🧹  Fetch all remotes and tags, and prune stale remote-tracking refs',
+    () => {},
+    handleCleanCommand,
   )
   .command(
     'commit',
